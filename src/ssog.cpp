@@ -124,31 +124,20 @@ Vec SSOG::calibrated_distribution(const Vec& base_probs,
         return base_probs;
     }
 
-    // p̃(y) = [p(y)·(1-C_uncertain) / Z] + [1_C(y)·C_uncertain / |C|]
+    // p̃(y) = (1-C) * p(y) + C * 1_C(y) / |C|
+    // This is self-normalizing: sum = (1-C)*1 + C*1 = 1
     Vec cal = base_probs;
 
-    // Compute normalization
-    Real mass_conformal = 0;
-    for (Index idx : conformal_set) {
-        mass_conformal += base_probs[idx];
-    }
-
-    Real Z = (1 - conformal_uncertainty) * (1 - mass_conformal)
-           + conformal_uncertainty;
-    if (Z < EPS) Z = EPS;
+    Real inv_set_size = 1.0 / conformal_set.size();
+    Real c = conformal_uncertainty;
+    Real one_minus_c = 1.0 - c;
 
     for (Index i = 0; i < n_vocab_ && i < base_probs.size(); ++i) {
-        Real p_base = base_probs[i];
-        Real p_extra = 0;
+        cal[i] = base_probs[i] * one_minus_c;
+    }
 
-        // Check if token i is in conformal set
-        bool in_set = std::find(conformal_set.begin(), conformal_set.end(), i)
-                       != conformal_set.end();
-        if (in_set) {
-            p_extra = conformal_uncertainty / conformal_set.size();
-        }
-
-        cal[i] = (p_base * (1 - conformal_uncertainty) + p_extra) / Z;
+    for (Index idx : conformal_set) {
+        cal[idx] += c * inv_set_size;
     }
 
     return cal;

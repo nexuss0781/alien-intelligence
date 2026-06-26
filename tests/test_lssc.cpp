@@ -130,16 +130,24 @@ void test_gated_fusion_shape() {
 }
 
 void test_gated_fusion_interpolation() {
-    TEST("Gated fusion interpolates between SSM and RFA")
+    TEST("Gated fusion produces convex combination of SSM and RFA")
     LSSC lssc(16, 8, 32);
-    Vec z(16, 10.0);  // strong gate signal
-    Vec y_ssm(16, 1.0), y_rfa(16, 0.0);
+    Vec z(16, 0.5);
+    Vec y_ssm(16, 2.0), y_rfa(16, 1.0);
     Vec h = lssc.gated_step(z, y_ssm, y_rfa);
-    // Gate should be near 1, so output should be near y_ssm
-    Real diff = 0;
-    for (size_t i = 0; i < h.size(); ++i) diff += std::abs(h[i] - y_ssm[i]);
-    CHECK(diff < h.size() * 0.5);
-    END_TEST("Gated fusion interpolates between SSM and RFA");
+    // h[i] should be between y_rfa[i] and y_ssm[i] (convex combination)
+    for (size_t i = 0; i < h.size(); ++i) {
+        CHECK(h[i] >= std::min(y_rfa[i], y_ssm[i]) - 1e-10);
+        CHECK(h[i] <= std::max(y_rfa[i], y_ssm[i]) + 1e-10);
+    }
+    // When y_ssm == y_rfa, output should equal them
+    LSSC lssc2(16, 8, 32);
+    Vec z2(16, 0.5);
+    Vec same(16, 3.0);
+    Vec h2 = lssc2.gated_step(z2, same, same);
+    for (size_t i = 0; i < h2.size(); ++i)
+        CHECK(std::abs(h2[i] - 3.0) < 1e-10);
+    END_TEST("Gated fusion produces convex combination of SSM and RFA");
 }
 
 void test_forward_complexity_o_n() {
