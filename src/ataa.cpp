@@ -116,11 +116,28 @@ Vec ATAA::apply_lora(const Vec& x, const Mat& W0,
 void ATAA::update_gradient_subspace(const Mat& gradient) {
     // Simple power iteration-based subspace update
     if (ogd_count_ == 0) {
-        // Initialize with normalized gradient columns
+        // Initialize with orthonormalized gradient columns
         for (Index j = 0; j < sketch_rank_; ++j) {
             Index col = j % gradient[0].size();
+            Vec g(d_model_);
             for (Index i = 0; i < d_model_; ++i) {
-                ogd_basis_[i][j] = gradient[i][col];
+                g[i] = gradient[i][col];
+            }
+            // Orthogonalize against previously initialized basis columns
+            for (Index k = 0; k < j; ++k) {
+                Real proj = 0;
+                for (Index i = 0; i < d_model_; ++i) {
+                    proj += ogd_basis_[i][k] * g[i];
+                }
+                for (Index i = 0; i < d_model_; ++i) {
+                    g[i] -= proj * ogd_basis_[i][k];
+                }
+            }
+            Real n = std::sqrt(norm2(g));
+            if (n > EPS) {
+                for (Index i = 0; i < d_model_; ++i) {
+                    ogd_basis_[i][j] = g[i] / n;
+                }
             }
         }
         ogd_count_++;

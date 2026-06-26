@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 echo "=== Alien Intelligence (AI²) Build & Test ==="
 
@@ -12,11 +12,21 @@ cmake --build build -j"$(nproc)"
 # Run all tests
 echo ""
 echo "=== Running Tests ==="
+FAILED=0
 for test in build/test_*; do
     if [ -x "$test" ]; then
-        "$test"
+        if "$test"; then
+            :
+        else
+            FAILED=$((FAILED + 1))
+        fi
         echo ""
     fi
 done
 
-echo "=== All components built and tested successfully ==="
+if [ "$FAILED" -eq 0 ]; then
+    echo "=== All components built and tested successfully ==="
+else
+    echo "=== $FAILED test suite(s) FAILED ==="
+    exit 1
+fi
