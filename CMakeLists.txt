@@ -15,10 +15,22 @@ add_library(ai2_core STATIC
     src/ssog.cpp
 )
 
+add_library(ai2_train STATIC
+    src/tokenizer.cpp
+    src/dataloader.cpp
+    src/model.cpp
+    src/optimizer.cpp
+    src/trainer.cpp
+)
+
 foreach(COMPONENT slie lssc stre uq ataa ssog)
     add_executable(test_${COMPONENT} tests/test_${COMPONENT}.cpp)
     target_link_libraries(test_${COMPONENT} ai2_core)
     add_test(NAME ${COMPONENT} COMMAND test_${COMPONENT})
 endforeach()
+
+add_executable(ai2_train src/main_train.cpp)
+target_link_libraries(ai2_train ai2_core ai2_train)
+target_link_libraries(ai2_train stdc++fs)
 
 enable_testing()
