@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== Alien Intelligence (AI²) Build & Test ==="
+
+# Configure
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+
+# Build
+cmake --build build -j"$(nproc)"
+
+# Run all tests
+echo ""
+echo "=== Running Tests ==="
+for test in build/test_*; do
+    if [ -x "$test" ]; then
+        "$test"
+        echo ""
+    fi
+done
+
+echo "=== All components built and tested successfully ==="

@@ -1,0 +1,15 @@
+you are high lel technical team and senior ai engineer
+
+follow strictly the SPEC.md specification to build an intelliegence
+
+fully compilant to the specification
+
+there are 6 components
+
+for each component write one cpp file in src/and  u can include include/ for hpp
+
+then create tests/ 6 test files for each component
+
+rigorous robust mathem
+arical stability and applicationibility tests
+then make them all pass
