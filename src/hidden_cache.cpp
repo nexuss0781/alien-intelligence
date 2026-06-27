@@ -1,8 +1,13 @@
 #include "hidden_cache.hpp"
 #include <iostream>
 #include <cstring>
+#include <fstream>
+#include <cstdint>
 
 namespace ai2 {
+
+static constexpr uint32_t CACHE_MAGIC = 0xA1C4A5C4; // "AICACHE"
+static constexpr uint32_t CACHE_VERSION = 1;
 
 void HiddenCache::build(Model& model, DataLoader& loader) {
     batch_size_ = loader.batch_size();
@@ -34,11 +39,6 @@ void HiddenCache::build(Model& model, DataLoader& loader) {
 
     loader.reset();
 
-    // Per-batch GPU buffers for mixture computation
-    std::vector<float> gpu_hidden_buf(pos_per_batch * d_model_);
-    std::vector<int> gpu_idx_buf(pos_per_batch * k_experts_);
-    std::vector<float> gpu_wgt_buf(pos_per_batch * k_experts_);
-
     for (Index bi = 0; bi < n_batches_; ++bi) {
         Batch batch = loader.next();
         if (batch.tokens.empty()) break;
@@ -56,7 +56,6 @@ void HiddenCache::build(Model& model, DataLoader& loader) {
         Index pos_offset = 0;
 
         for (Index b = 0; b < batch_size_; ++b) {
-            // SLIE
             Mat embeddings(seq_len_, Vec(d_model_, 0));
             Vec prev_pos(model.slie().d_pos(), 0);
             model.slie().reset_position();
@@ -68,10 +67,8 @@ void HiddenCache::build(Model& model, DataLoader& loader) {
                 prev_pos = model.slie().last_position();
             }
 
-            // LSSC
             Mat hidden = model.lssc().forward(embeddings);
 
-            // STRE
             auto stre_features = model.stre().forward(hidden, model.config().n_layers);
             for (Index t = 0; t < seq_len_; ++t) {
                 Vec& h = hidden[t];
@@ -83,13 +80,11 @@ void HiddenCache::build(Model& model, DataLoader& loader) {
                 }
             }
 
-            // Store hidden + routing, compute mixture via CPU fallback or GPU
             for (Index t = 0; t < seq_len_; ++t) {
                 const Vec& h = hidden[t];
                 for (Index j = 0; j < d_model_; ++j)
                     hidden_cache_[bi][pos_offset * d_model_ + j] = static_cast<float>(h[j]);
 
-                // SSOG routing
                 std::vector<Index> experts = model.ssog().route(h);
                 Vec weights = model.ssog().gating_weights(h, experts);
 
@@ -103,12 +98,10 @@ void HiddenCache::build(Model& model, DataLoader& loader) {
                         routing_wgt_cache_[bi][idx] = 0.0f;
                     }
                 }
-
                 pos_offset++;
             }
         }
 
-        // Compute mixture on GPU
         if (have_gpu) {
             gpu::compute_mixture_batch(
                 model.gpu_ctx(),
@@ -118,7 +111,6 @@ void HiddenCache::build(Model& model, DataLoader& loader) {
                 mixture_cache_[bi].data(),
                 static_cast<int>(pos_offset));
         } else {
-            // CPU fallback: compute mixture via SSOG
             pos_offset = 0;
             for (Index b = 0; b < batch_size_; ++b) {
                 for (Index t = 0; t < seq_len_; ++t) {
@@ -145,6 +137,115 @@ void HiddenCache::build(Model& model, DataLoader& loader) {
     std::size_t total_mb = total_positions * d_model_ * 4 * 2 / (1024*1024);
     std::cout << "  Cache done: " << total_positions << " positions, ~"
               << total_mb << "MB RAM (hidden + mixture)" << std::endl;
+}
+
+void HiddenCache::save(const std::string& path) const {
+    std::ofstream f(path, std::ios::binary);
+    if (!f.is_open()) {
+        std::cerr << "  [Cache] Error: could not write " << path << std::endl;
+        return;
+    }
+
+    auto write_u64 = [&](uint64_t v) { f.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
+
+    write_u64(CACHE_MAGIC);
+    write_u64(CACHE_VERSION);
+    write_u64(n_batches_);
+    write_u64(batch_size_);
+    write_u64(seq_len_);
+    write_u64(d_model_);
+    write_u64(n_experts_);
+    write_u64(k_experts_);
+
+    for (Index bi = 0; bi < n_batches_; ++bi) {
+        auto& h = hidden_cache_[bi];
+        auto& m = mixture_cache_[bi];
+        auto& ri = routing_idx_cache_[bi];
+        auto& rw = routing_wgt_cache_[bi];
+        auto& tg = target_cache_[bi];
+
+        write_u64(h.size());
+        f.write(reinterpret_cast<const char*>(h.data()), h.size() * sizeof(float));
+
+        write_u64(m.size());
+        f.write(reinterpret_cast<const char*>(m.data()), m.size() * sizeof(float));
+
+        write_u64(ri.size());
+        f.write(reinterpret_cast<const char*>(ri.data()), ri.size() * sizeof(int));
+
+        write_u64(rw.size());
+        f.write(reinterpret_cast<const char*>(rw.data()), rw.size() * sizeof(float));
+
+        // Flatten targets to uint32
+        std::vector<uint32_t> tgt_flat;
+        tgt_flat.reserve(batch_size_ * seq_len_);
+        for (auto& row : tg)
+            for (auto& val : row)
+                tgt_flat.push_back(static_cast<uint32_t>(val));
+        write_u64(tgt_flat.size());
+        f.write(reinterpret_cast<const char*>(tgt_flat.data()), tgt_flat.size() * sizeof(uint32_t));
+    }
+
+    f.close();
+    std::cout << "  [Cache] saved " << (n_batches_ * 2 * batch_size_ * seq_len_ * d_model_ * 4 / (1024*1024))
+              << "MB to " << path << std::endl;
+}
+
+bool HiddenCache::load(const std::string& path) {
+    std::ifstream f(path, std::ios::binary);
+    if (!f.is_open()) return false;
+
+    auto read_u64 = [&]() -> uint64_t {
+        uint64_t v = 0;
+        f.read(reinterpret_cast<char*>(&v), sizeof(v));
+        return v;
+    };
+
+    uint64_t magic = read_u64();
+    if (magic != CACHE_MAGIC) { f.close(); return false; }
+
+    uint64_t version = read_u64();
+    if (version != CACHE_VERSION) { f.close(); return false; }
+
+    n_batches_ = read_u64();
+    batch_size_ = read_u64();
+    seq_len_ = read_u64();
+    d_model_ = read_u64();
+    n_experts_ = read_u64();
+    k_experts_ = read_u64();
+
+    hidden_cache_.resize(n_batches_);
+    mixture_cache_.resize(n_batches_);
+    routing_idx_cache_.resize(n_batches_);
+    routing_wgt_cache_.resize(n_batches_);
+    target_cache_.resize(n_batches_);
+
+    for (Index bi = 0; bi < n_batches_; ++bi) {
+        auto read_vec = [&](auto& vec) {
+            uint64_t sz = read_u64();
+            vec.resize(sz);
+            f.read(reinterpret_cast<char*>(vec.data()), sz * sizeof(typename std::decay<decltype(vec)>::type::value_type));
+        };
+
+        read_vec(hidden_cache_[bi]);
+        read_vec(mixture_cache_[bi]);
+        read_vec(routing_idx_cache_[bi]);
+        read_vec(routing_wgt_cache_[bi]);
+
+        // Restore targets from flat uint32
+        uint64_t tgt_sz = read_u64();
+        std::vector<uint32_t> tgt_flat(tgt_sz);
+        f.read(reinterpret_cast<char*>(tgt_flat.data()), tgt_sz * sizeof(uint32_t));
+
+        target_cache_[bi].resize(batch_size_, Vec(seq_len_, 0));
+        for (uint64_t i = 0; i < tgt_sz; ++i) {
+            target_cache_[bi][i / seq_len_][i % seq_len_] = static_cast<Real>(tgt_flat[i]);
+        }
+    }
+
+    f.close();
+    std::cout << "  [Cache] loaded " << n_batches_ << " batches from " << path << std::endl;
+    return true;
 }
 
 const float* HiddenCache::get_hidden_batch(Index batch_idx) const {

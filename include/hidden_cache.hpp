@@ -2,12 +2,17 @@
 #include "model.hpp"
 #include "dataloader.hpp"
 #include <vector>
+#include <string>
 
 namespace ai2 {
 
 class HiddenCache {
 public:
     void build(Model& model, DataLoader& loader);
+
+    // Save/load cache to/from disk (~3GB binary file)
+    void save(const std::string& path) const;
+    bool load(const std::string& path);
 
     Index num_batches() const { return n_batches_; }
     Index batch_size() const { return batch_size_; }

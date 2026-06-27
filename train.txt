@@ -16,12 +16,17 @@ echo "[2/3] Building with CUDA..."
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j"$(nproc)" --target ai2_train
 
-# Step 3: Run training (GPU accelerated) — resume if checkpoint exists
+# Step 3: Run training — resume from latest checkpoint+cache if exists
 echo "[3/3] Starting training (GPU) ..."
-if ls checkpoints/*_step_*.bin 2>/dev/null | head -1 | grep -q .; then
-    echo "  Checkpoint found, resuming..."
+mkdir -p checkpoints
+if ls checkpoints/*.bin 2>/dev/null | head -1 | grep -q .; then
+    LATEST=$(ls -t checkpoints/*.bin 2>/dev/null | head -1)
+    echo "  Found checkpoint: $LATEST"
+    echo "  Cache file: checkpoints/*_cache.bin (loaded automatically)"
+    echo "  Resuming..."
     ./build/ai2_train --resume
 else
     echo "  No checkpoint found, starting fresh..."
+    echo "  Cache will be built and saved to checkpoints/*_cache.bin (~3GB)"
     ./build/ai2_train
 fi

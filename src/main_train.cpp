@@ -11,7 +11,6 @@
 
 using namespace ai2;
 
-// Find the latest checkpoint file matching a given prefix
 static std::string find_latest_checkpoint(const std::string& dir,
                                            const std::string& prefix) {
     namespace fs = std::filesystem;
@@ -22,20 +21,30 @@ static std::string find_latest_checkpoint(const std::string& dir,
 
     for (const auto& entry : fs::directory_iterator(dir)) {
         std::string name = entry.path().filename().string();
-        // Match pattern: prefix + "_step_" + digits + ".bin"
-        std::string match_prefix = prefix + "_step_";
-        if (name.rfind(match_prefix, 0) == 0 && name.size() > match_prefix.size()) {
-            std::string num_part = name.substr(match_prefix.size());
-            // Remove trailing ".bin"
-            auto dot = num_part.rfind(".bin");
-            if (dot != std::string::npos) num_part = num_part.substr(0, dot);
-            try {
-                Index step = std::stoull(num_part);
-                if (step > max_step) {
-                    max_step = step;
-                    latest = entry.path().string();
-                }
-            } catch (...) {}
+        // Match: prefix + "_step_" + digits + ".bin"
+        // Match: prefix + "_epoch_" + digits + ".bin"
+        // Match: prefix + "_final.bin"
+        for (const char* suffix : {"_step_", "_epoch_"}) {
+            std::string match = prefix + suffix;
+            if (name.rfind(match, 0) == 0 && name.size() > match.size()) {
+                std::string num_part = name.substr(match.size());
+                auto dot = num_part.rfind(".bin");
+                if (dot != std::string::npos) num_part = num_part.substr(0, dot);
+                try {
+                    Index step = std::stoull(num_part);
+                    if (step > max_step) {
+                        max_step = step;
+                        latest = entry.path().string();
+                    }
+                } catch (...) {}
+            }
+        }
+        // Also check final checkpoint
+        if (name == prefix + "_final.bin") {
+            // Final is the highest priority
+            if (max_step == 0) latest = entry.path().string();
+            max_step = Index(-1); // sentinel
+            latest = entry.path().string();
         }
     }
     return latest;
@@ -44,15 +53,13 @@ static std::string find_latest_checkpoint(const std::string& dir,
 int main(int argc, char** argv) {
     std::cout << "=== Alien Intelligence (AI²) Training ===" << std::endl;
 
-    // Configuration
     std::string data_dir = "data";
     std::string pretrain_file = data_dir + "/pretrain.txt";
     std::string finetune_file = data_dir + "/alpaca_cleaned.txt";
     std::string checkpoint_dir = "checkpoints";
     bool resume = false;
-
-    // Parse args: "--resume" optionally followed by a specific checkpoint path
     std::string resume_path;
+
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--resume" || arg == "-r") {
@@ -62,7 +69,6 @@ int main(int argc, char** argv) {
         }
     }
 
-    // Check if datasets exist
     {
         std::ifstream f(pretrain_file);
         if (!f.good()) {
@@ -71,10 +77,8 @@ int main(int argc, char** argv) {
         }
     }
 
-    // ========== Stage 1: Pretraining ==========
     std::cout << "\n--- Stage 1: Pretraining ---" << std::endl;
 
-    // Build tokenizer from pretraining data
     Tokenizer tokenizer;
     {
         std::ifstream f(pretrain_file);
@@ -83,16 +87,12 @@ int main(int argc, char** argv) {
         std::string text = ss.str();
         tokenizer.build_from_chars(text);
         std::cout << "Tokenizer vocab size: " << tokenizer.vocab_size() << std::endl;
-
-        // Save tokenizer
         tokenizer.save(data_dir + "/tokenizer.vocab");
     }
 
-    // Create data loaders
     DataLoader train_loader(pretrain_file, tokenizer, 64, 128);
     DataLoader eval_loader(pretrain_file, tokenizer, 32, 128);
 
-    // Initialize model
     ModelConfig cfg;
     cfg.vocab_size = tokenizer.vocab_size();
     cfg.d_model = 256;
@@ -113,7 +113,6 @@ int main(int argc, char** argv) {
               << " experts=" << cfg.n_experts
               << std::endl;
 
-    // Run pretraining
     {
         TrainConfig train_cfg;
         train_cfg.num_epochs = 3;
@@ -126,7 +125,6 @@ int main(int argc, char** argv) {
 
         Trainer trainer(model, train_loader, &eval_loader, train_cfg);
 
-        // Resume from checkpoint if requested
         if (resume) {
             std::string ckpt = resume_path.empty()
                 ? find_latest_checkpoint(checkpoint_dir, train_cfg.run_name)
@@ -142,7 +140,6 @@ int main(int argc, char** argv) {
         trainer.train();
     }
 
-    // ========== Stage 2: Finetuning ==========
     std::cout << "\n--- Stage 2: Finetuning on Instructions ---" << std::endl;
 
     {

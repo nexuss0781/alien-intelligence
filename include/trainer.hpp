@@ -47,6 +47,8 @@ private:
     std::ofstream log_stream_;
     HiddenCache hidden_cache_;
 
+    std::string cache_path() const;
+    bool try_load_cache();
     void build_hidden_cache();
     TrainingMetrics train_with_cache();
     TrainingMetrics evaluate();
