@@ -35,6 +35,9 @@ public:
     // Number of batches per epoch
     Index batches_per_epoch() const { return batches_per_epoch_; }
 
+    Index batch_size() const { return batch_size_; }
+    Index seq_len() const { return seq_len_; }
+
 private:
     const Tokenizer* tokenizer_;
     Index batch_size_;

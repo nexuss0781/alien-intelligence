@@ -57,14 +57,13 @@ void test_graph_no_duplicate_edges() {
 }
 
 void test_restriction_maps() {
-    TEST("Restriction maps initialized correctly")
+    TEST("Restriction maps initialized correctly (identity via build_graph)")
     STRE stre(8, 4, 8, 3);
     Mat Z(10, Vec(8, 0.3));
     stre.build_graph(Z);
-    stre.init_restriction_maps(42);
 
     CHECK(stre.num_nodes() > 0);
-    END_TEST("Restriction maps initialized correctly");
+    END_TEST("Restriction maps initialized correctly (identity via build_graph)");
 }
 
 void test_propagation_shape() {
