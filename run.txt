@@ -1,1 +1,1 @@
-cmake -B build -S . && cmake --build build -j$(nproc) && ./build/test_math && ./build/test_slie && ./build/test_lssc && ./build/test_stre && ./build/test_uq && ./build/test_ataa && ./build/test_ssog
+rm -rf build && cmake -B build -S . && cmake --build build -j$(nproc) && ./build/test_math && ./build/test_slie && ./build/test_lssc && ./build/test_stre && ./build/test_uq && ./build/test_ataa && ./build/test_ssog
