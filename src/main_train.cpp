@@ -4,10 +4,12 @@
 #include "trainer.hpp"
 #include <iostream>
 #include <string>
+#include <fstream>
+#include <sstream>
 
 using namespace ai2;
 
-int main(int argc, char** argv) {
+int main(int /*argc*/, char** /*argv*/) {
     std::cout << "=== Alien Intelligence (AI²) Training ===" << std::endl;
 
     // Configuration
