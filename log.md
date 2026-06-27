@@ -20,18 +20,18 @@
 [ 34%] Linking CXX executable test_slie
 [ 34%] Built target test_slie
 [ 37%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/dataloader.cpp.o
-[ 41%] Building CXX object CMakeFiles/test_lssc.dir/tests/test_lssc.cpp.o
-[ 44%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/model.cpp.o
-[ 48%] Linking CXX executable test_lssc
-[ 48%] Built target test_lssc
-[ 51%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/optimizer.cpp.o
-[ 55%] Building CXX object CMakeFiles/test_stre.dir/tests/test_stre.cpp.o
-[ 58%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/trainer.cpp.o
-[ 62%] Linking CXX executable test_stre
-[ 62%] Built target test_stre
+[ 41%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/model.cpp.o
+[ 44%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/optimizer.cpp.o
+[ 48%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/trainer.cpp.o
+[ 51%] Building CXX object CMakeFiles/test_lssc.dir/tests/test_lssc.cpp.o
+[ 55%] Linking CXX executable test_lssc
+[ 55%] Built target test_lssc
+[ 58%] Building CXX object CMakeFiles/test_stre.dir/tests/test_stre.cpp.o
+[ 62%] Linking CXX static library libai2_train_lib.a
+[ 62%] Built target ai2_train_lib
 [ 65%] Building CXX object CMakeFiles/test_uq.dir/tests/test_uq.cpp.o
-[ 68%] Linking CXX static library libai2_train_lib.a
-[ 68%] Built target ai2_train_lib
+[ 68%] Linking CXX executable test_stre
+[ 68%] Built target test_stre
 [ 72%] Building CXX object CMakeFiles/test_ataa.dir/tests/test_ataa.cpp.o
 [ 75%] Linking CXX executable test_uq
 [ 75%] Built target test_uq
@@ -43,52 +43,24 @@
 [ 89%] Built target test_ssog
 [ 93%] Building CXX object CMakeFiles/ai2_train.dir/src/main_train.cpp.o
 /content/alien-intelligence/tests/test_math.cpp: In function ‘void ai2::test::test_gradient_math()’:
-/content/alien-intelligence/tests/test_math.cpp:734:33: warning: unused variable ‘g_min’ [-Wunused-variable]
-  734 |     Real g_norm = 0, g_max = 0, g_min = 0;
-      |                                 ^~~~~
+/content/alien-intelligence/tests/test_math.cpp:773:64: error: ‘std::vector<std::vector<std::vector<double> > > ai2::Model::logits_’ is private within this context
+  773 |     for (Index i = 0; i < 8 && i < 16; ++i) std::cout << model.logits_[0][0][i] << ",";
+      |                                                                ^~~~~~~
+In file included from /content/alien-intelligence/tests/test_math.cpp:8:
+/content/alien-intelligence/include/model.hpp:100:35: note: declared private here
+  100 |     std::vector<std::vector<Vec>> logits_;    // [batch x seq_len x vocab]
+      |                                   ^~~~~~~
+/content/alien-intelligence/tests/test_math.cpp:784:64: error: ‘std::vector<std::vector<std::vector<double> > > ai2::Model::logits_’ is private within this context
+  784 |     for (Index i = 0; i < 8 && i < 16; ++i) std::cout << model.logits_[0][0][i] << ",";
+      |                                                                ^~~~~~~
+In file included from /content/alien-intelligence/tests/test_math.cpp:8:
+/content/alien-intelligence/include/model.hpp:100:35: note: declared private here
+  100 |     std::vector<std::vector<Vec>> logits_;    // [batch x seq_len x vocab]
+      |                                   ^~~~~~~
+gmake[2]: *** [CMakeFiles/test_math.dir/build.make:79: CMakeFiles/test_math.dir/tests/test_math.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:371: CMakeFiles/test_math.dir/all] Error 2
+gmake[1]: *** Waiting for unfinished jobs....
 [ 96%] Linking CXX executable ai2_train
 [ 96%] Built target ai2_train
-[100%] Linking CXX executable test_math
-[100%] Built target test_math
-=== Alien Intelligence (AI²) Comprehensive Mathematical Tests ===
-
-[Types/Utilities Mathematical Tests]
-
-[SLIE Mathematical Tests]
-  FAIL: Different token IDs should yield different embeddings
-    [debug] same-token L2 diff=0 max_diff[0]=0 a[i]=0.00813751 b[i]=0.00813751
-  FAIL: Positional encoding: same token at different positions should differ (or positional component is additive)
-    [debug] sketch_features size=16 expected=16
-
-[LSSC Mathematical Tests]
-
-[STRE Mathematical Tests]
-    [debug] n_nodes=1 n_edges=0
-  FAIL: Sheaf Laplacian of constant vector should be near zero, got 1.000000 got 1 expected 0 (diff=1)
-
-[UQ Mathematical Tests]
-
-[ATAA Mathematical Tests]
-
-[SSOG Mathematical Tests]
-
-[Optimizer Mathematical Tests]
-
-[Gradient Mathematical Tests]
-    [debug] grad_norm=2.52491 grad_max=1.07206 param_W[0]=0.371773 param_b[0]=0
-    [debug] loss before=2.77259 after=2.77259 change=0 param_W[0]=0.377146 param_b[0]=-0.01875
-  FAIL: Loss should change after SGD step, was 2.772589 now 2.772589 (grad_norm=2.524915)
-
-[Pipeline Integration Test]
-    [debug] step=1 loss=2.772589 |g|=11.8163 b_out[0]: 0.0000 -> -0.0100
-    [debug] step=2 loss=2.772589 |g|=11.8163 b_out[0]: -0.0100 -> -0.0200
-    [debug] step=3 loss=2.772589 |g|=11.8163 b_out[0]: -0.0200 -> -0.0300
-    [debug] step=10 loss=2.772589 |g|=11.8163 b_out[0]: -0.0900 -> -0.1000
-  FAIL: Loss should change during training. All values = 2.772589
-  Loss trajectory: 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 
-
-=== Results ===
-  Total: 276
-  Passed: 271
-  Failed: 5
+gmake: *** [Makefile:101: all] Error 2
 

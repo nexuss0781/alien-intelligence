@@ -769,9 +769,14 @@ void test_gradient_math() {
     opt.add_param("b_out", &model.param_b_out_, &model.grad_b_out_);
 
     // Print first few logits before step
-    std::cout << "    [debug] BEFORE step: logits[0][0..7]=";
-    for (Index i = 0; i < 8 && i < 16; ++i) std::cout << model.logits_[0][0][i] << ",";
-    std::cout << " target=" << targets[0][0] << std::endl;
+    {
+        auto logits = model.logits();
+        std::cout << "    [debug] BEFORE step: logits[0][0..7]=";
+        if (!logits.empty() && !logits[0].empty())
+            for (Index i = 0; i < 8 && i < logits[0][0].size(); ++i)
+                std::cout << logits[0][0][i] << ",";
+        std::cout << " target=" << targets[0][0] << std::endl;
+    }
 
     opt.step();
     model.sync_params_to_ssog();
@@ -780,8 +785,14 @@ void test_gradient_math() {
     Real loss_change = std::abs(metrics2.loss - loss_before);
 
     // Print first few logits after step
-    std::cout << "    [debug] AFTER  step: logits[0][0..7]=";
-    for (Index i = 0; i < 8 && i < 16; ++i) std::cout << model.logits_[0][0][i] << ",";
+    {
+        auto logits = model.logits();
+        std::cout << "    [debug] AFTER  step: logits[0][0..7]=";
+        if (!logits.empty() && !logits[0].empty())
+            for (Index i = 0; i < 8 && i < logits[0][0].size(); ++i)
+                std::cout << logits[0][0][i] << ",";
+        std::cout << " target=" << targets[0][0] << std::endl;
+    }
     std::cout << " target=" << targets[0][0] << std::endl;
 
     std::cout << "    [debug] loss before=" << loss_before

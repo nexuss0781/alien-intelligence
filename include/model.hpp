@@ -64,7 +64,7 @@ public:
     void sync_params_from_ssog();
 
     // Get logits from last forward pass
-    std::vector<std::vector<Vec>> logits() const { return logits_; }
+    const std::vector<std::vector<Vec>>& logits() const { return logits_; }
 
     // Access components
     SLIE& slie() { return *slie_; }
