@@ -4,42 +4,42 @@
 -- Check for working CXX compiler: /usr/bin/c++ - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Configuring done (0.3s)
+-- Configuring done (0.2s)
 -- Generating done (0.0s)
 -- Build files have been written to: /content/alien-intelligence/build
-[  6%] Building CXX object CMakeFiles/ai2_core.dir/src/slie.cpp.o
 [  6%] Building CXX object CMakeFiles/ai2_core.dir/src/lssc.cpp.o
+[  6%] Building CXX object CMakeFiles/ai2_core.dir/src/slie.cpp.o
 [ 10%] Building CXX object CMakeFiles/ai2_core.dir/src/stre.cpp.o
 [ 13%] Building CXX object CMakeFiles/ai2_core.dir/src/uq.cpp.o
 [ 17%] Building CXX object CMakeFiles/ai2_core.dir/src/ataa.cpp.o
 [ 20%] Building CXX object CMakeFiles/ai2_core.dir/src/ssog.cpp.o
 [ 24%] Linking CXX static library libai2_core.a
 [ 24%] Built target ai2_core
-[ 31%] Building CXX object CMakeFiles/test_slie.dir/tests/test_slie.cpp.o
+[ 27%] Building CXX object CMakeFiles/test_slie.dir/tests/test_slie.cpp.o
 [ 31%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/tokenizer.cpp.o
 [ 34%] Linking CXX executable test_slie
 [ 34%] Built target test_slie
 [ 37%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/dataloader.cpp.o
 [ 41%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/model.cpp.o
-[ 44%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/optimizer.cpp.o
-[ 48%] Building CXX object CMakeFiles/test_lssc.dir/tests/test_lssc.cpp.o
-[ 51%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/trainer.cpp.o
-[ 55%] Linking CXX executable test_lssc
-[ 55%] Built target test_lssc
-[ 58%] Building CXX object CMakeFiles/test_stre.dir/tests/test_stre.cpp.o
-[ 62%] Linking CXX static library libai2_train_lib.a
-[ 62%] Built target ai2_train_lib
+[ 44%] Building CXX object CMakeFiles/test_lssc.dir/tests/test_lssc.cpp.o
+[ 48%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/optimizer.cpp.o
+[ 51%] Linking CXX executable test_lssc
+[ 51%] Built target test_lssc
+[ 55%] Building CXX object CMakeFiles/test_stre.dir/tests/test_stre.cpp.o
+[ 58%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/trainer.cpp.o
+[ 62%] Linking CXX executable test_stre
+[ 62%] Built target test_stre
 [ 65%] Building CXX object CMakeFiles/test_uq.dir/tests/test_uq.cpp.o
-[ 68%] Linking CXX executable test_stre
-[ 68%] Built target test_stre
-[ 72%] Building CXX object CMakeFiles/test_ataa.dir/tests/test_ataa.cpp.o
-[ 75%] Linking CXX executable test_uq
-[ 75%] Built target test_uq
+[ 68%] Linking CXX executable test_uq
+[ 68%] Built target test_uq
+[ 72%] Linking CXX static library libai2_train_lib.a
+[ 75%] Building CXX object CMakeFiles/test_ataa.dir/tests/test_ataa.cpp.o
+[ 75%] Built target ai2_train_lib
 [ 79%] Building CXX object CMakeFiles/test_ssog.dir/tests/test_ssog.cpp.o
 [ 82%] Linking CXX executable test_ataa
-[ 82%] Built target test_ataa
-[ 86%] Building CXX object CMakeFiles/test_math.dir/tests/test_math.cpp.o
-[ 89%] Linking CXX executable test_ssog
+[ 86%] Linking CXX executable test_ssog
+[ 86%] Built target test_ataa
+[ 89%] Building CXX object CMakeFiles/test_math.dir/tests/test_math.cpp.o
 [ 89%] Built target test_ssog
 [ 93%] Building CXX object CMakeFiles/ai2_train.dir/src/main_train.cpp.o
 [ 96%] Linking CXX executable ai2_train
@@ -62,7 +62,6 @@
 [STRE Mathematical Tests]
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=16 first_feat[0]=1 result[0][0]=0
     [debug] n_nodes=1 lap[0][0]=0 total=0
-  FAIL: Sheaf Laplacian of constant vector should be near zero got 1 expected 0 (diff=1)
     [debug stre] sheaf_laplacian_all: n=4 nodes_.size()=4 rest_maps_.size()=4 d_node=16 first_feat[0]=-0.641406 result[0][0]=0
 
 [UQ Mathematical Tests]
@@ -70,15 +69,25 @@
 [ATAA Mathematical Tests]
 
 [SSOG Mathematical Tests]
+    [debug ssog] base_dist call=1 mixture[0]=0.352496 W_out[0][0]=-0.160737 b_out[0]=0 logit[0]=-0.143099 logit[1]=0.110007 max-min=0.524427 n_vocab=50 d_model=16
+    [debug ssog] base_dist call=2 mixture[0]=0.352496 W_out[0][0]=-0.160737 b_out[0]=0 logit[0]=-0.143099 logit[1]=0.110007 max-min=0.524427 n_vocab=50 d_model=16
+    [debug ssog] base_dist call=3 mixture[0]=0.352496 W_out[0][0]=-0.160737 b_out[0]=0 logit[0]=-0.143099 logit[1]=0.110007 max-min=0.524427 n_vocab=50 d_model=16
+    [debug ssog] base_dist call=4 mixture[0]=0.352496 W_out[0][0]=-0.160737 b_out[0]=0 logit[0]=-0.143099 logit[1]=0.110007 max-min=0.524427 n_vocab=50 d_model=16
 
 [Optimizer Mathematical Tests]
 
 [Gradient Mathematical Tests]
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.173153 result[0][0]=0
+    [debug ssog] base_dist call=5 mixture[0]=-0.23938 W_out[0][0]=0.371773 b_out[0]=0 logit[0]=-0.360955 logit[1]=0.0803731 max-min=1.08009 n_vocab=16 d_model=8
+    [debug ssog] base_dist call=6 mixture[0]=-0.132779 W_out[0][0]=0.371773 b_out[0]=0 logit[0]=0.107941 logit[1]=0.255436 max-min=0.394355 n_vocab=16 d_model=8
+    [debug ssog] base_dist call=7 mixture[0]=-0.326068 W_out[0][0]=0.371773 b_out[0]=0 logit[0]=0.0259704 logit[1]=-0.34685 max-min=0.833478 n_vocab=16 d_model=8
     [debug] grad_norm=2.52491 grad_max=1.07206 param_W[0]=0.371773 param_b[0]=0
     [debug] BEFORE step: logits.size=1 seq[0].size=3 vocab=16 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 target=2
     [debug model] sync: b_out[0] 0 -> -0.01875 (param=-0.01875) W_out[0][0] 0.371773 -> 0.377146 (param=0.377146) n_vocab=16 d_model=8 W_out.size=16 b_out.size=16
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.173153 result[0][0]=0
+    [debug ssog] base_dist call=8 mixture[0]=-0.23938 W_out[0][0]=0.377146 b_out[0]=-0.01875 logit[0]=-0.381647 logit[1]=0.0596804 max-min=1.0095 n_vocab=16 d_model=8
+    [debug ssog] base_dist call=9 mixture[0]=-0.132779 W_out[0][0]=0.377146 b_out[0]=-0.01875 logit[0]=0.0883484 logit[1]=0.235843 max-min=0.51612 n_vocab=16 d_model=8
+    [debug ssog] base_dist call=10 mixture[0]=-0.326068 W_out[0][0]=0.377146 b_out[0]=-0.01875 logit[0]=0.0067593 logit[1]=-0.366061 max-min=0.982307 n_vocab=16 d_model=8
     [debug] AFTER  step: logits.size=1 seq[0].size=3 vocab=16 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 target=2
  target=2
     [debug] loss before=2.77259 after=2.77259 change=0 param_W[0]=0.377146 param_b[0]=-0.01875
@@ -143,7 +152,7 @@
   Loss trajectory: 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 
 
 === Results ===
-  Total: 276
-  Passed: 273
-  Failed: 3
+  Total: 277
+  Passed: 275
+  Failed: 2
 

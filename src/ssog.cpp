@@ -144,7 +144,7 @@ Vec SSOG::calibrated_distribution(const Vec& base_probs,
                                    Real conformal_uncertainty,
                                    const std::vector<Index>& conformal_set) const
 {
-    if (conformal_uncertainty < EPS || conformal_set.empty()) {
+    if (conformal_uncertainty < EPS || conformal_uncertainty >= 1.0 - EPS || conformal_set.empty()) {
         return base_probs;
     }
 
