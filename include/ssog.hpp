@@ -71,6 +71,12 @@ public:
     Index k_experts() const { return k_experts_; }
     Index n_vocab() const { return n_vocab_; }
 
+    // Mutable references for gradient-based training
+    Mat& W_out() { return W_out_; }
+    Vec& b_out() { return b_out_; }
+    const Mat& W_out() const { return W_out_; }
+    const Vec& b_out() const { return b_out_; }
+
 private:
     Index d_model_;
     Index n_vocab_;

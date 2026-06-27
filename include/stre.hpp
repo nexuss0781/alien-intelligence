@@ -43,9 +43,8 @@ public:
 
     // --------------- Sheaf Neural Network ---------------
 
-    // Restriction maps F_{u->v}: linear transformations
-    // Stored per directed edge: F_{v->u} ∈ R^{d_node × d_node}
-    void init_restriction_maps(Index seed = 42);
+    // Restriction maps F_{u->v}: identity (sheaf → standard graph Laplacian)
+    // stable, deterministic, O(1) per edge
 
     // Sheaf Laplacian: Δ_F(x)_v = Σ_{u~v} F_{v->u}^T (F_{v->u} x_v - F_{u->v} x_u)
     // O(|E|) = O(n) since Δ = O(1)
@@ -94,6 +93,9 @@ private:
 
     // Position -> node mapping (for position i, which node does it belong to?)
     std::vector<Index> pos_to_node_;
+
+    // Per-layer propagation weights (learned, initialized once)
+    std::vector<Mat> layer_W_;
 
     // Specialist MLP for pathology resolution (2-layer: d_node -> 4*d_node -> d_node)
     Mat path_W1_, path_W2_;

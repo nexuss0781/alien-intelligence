@@ -13,14 +13,9 @@ Trainer::Trainer(Model& model, DataLoader& train_loader,
       eval_loader_(eval_loader), cfg_(cfg),
       optimizer_(Optimizer::ADAM, cfg.lr, 0.9, 0.999, 1e-8, cfg.weight_decay)
 {
-    // Register trainable parameters with the optimizer
-    // For now, we train the SSOG output projection and expert weights
-    auto& ssog = model_.ssog();
-
-    // Experts: flat storage of expert_weights_ and expert_biases_
-    // For simplicity in this prototype, we register the output projection
-    // In a full implementation, we'd need to flatten and register all trainable params
-    (void)ssog;
+    // Register SSOG output projection parameters with optimizer
+    optimizer_.add_param("W_out", &model_.param_W_out_, &model_.grad_W_out_);
+    optimizer_.add_param("b_out", &model_.param_b_out_, &model_.grad_b_out_);
 }
 
 void Trainer::train() {
@@ -28,10 +23,9 @@ void Trainer::train() {
     std::cout << "  Run: " << cfg_.run_name << std::endl;
     std::cout << "  Max epochs: " << cfg_.num_epochs << std::endl;
     std::cout << "  Learning rate: " << cfg_.lr << std::endl;
-    std::cout << "  Batch size: " << std::endl;  // logged from data loader
+    std::cout << "  Optimizer params: " << optimizer_.num_params() << std::endl;
     std::cout << "  Checkpoint dir: " << cfg_.checkpoint_dir << std::endl;
 
-    // Create checkpoint directory
     std::filesystem::create_directories(cfg_.checkpoint_dir);
 
     Index global_step = 0;
@@ -44,15 +38,27 @@ void Trainer::train() {
         Index epoch_step = 0;
 
         while (!train_loader_.epoch_done()) {
-            // Get batch
             Batch batch = train_loader_.next();
             if (batch.tokens.empty()) break;
 
             // Forward pass
             TrainingMetrics metrics = model_.forward(batch.tokens, batch.targets);
-            metrics_ = {metrics};
 
-            // Log progress
+            // Backward pass: compute gradients for output layer
+            model_.zero_gradients();
+            model_.compute_gradients(batch.targets);
+
+            // Optimizer step: update parameters
+            optimizer_.step();
+
+            // Sync updated params back to SSOG
+            model_.sync_params_to_ssog();
+
+            // Update learning rate
+            optimizer_.set_lr(get_lr(global_step));
+
+            // Logging
+            metrics_ = {metrics};
             tokens_processed += batch.batch_size * batch.seq_len;
             global_step++;
             epoch_step++;
@@ -79,15 +85,14 @@ void Trainer::train() {
                 std::cout << "  [Checkpoint] saved to " << ckpt_path << std::endl;
             }
 
-            // Check max steps
             if (cfg_.max_steps > 0 && global_step >= cfg_.max_steps) break;
         }
 
-        // End of epoch evaluation
         TrainingMetrics epoch_metrics = metrics_.empty() ? TrainingMetrics{} : metrics_.back();
         std::cout << "  [Epoch " << (epoch + 1) << "] done. "
                   << "loss=" << epoch_metrics.loss
                   << " ppl=" << epoch_metrics.perplexity
+                  << " acc=" << (epoch_metrics.accuracy * 100) << "%"
                   << std::endl;
 
         if (cfg_.max_steps > 0 && global_step >= cfg_.max_steps) break;
@@ -99,15 +104,12 @@ void Trainer::train() {
     std::cout << "  Tokens processed: " << tokens_processed << std::endl;
     std::cout << "  Time elapsed: " << elapsed << "s" << std::endl;
 
-    // Save final checkpoint
     std::string final_path = cfg_.checkpoint_dir + "/" + cfg_.run_name + "_final.bin";
     save_checkpoint(final_path);
     std::cout << "  Final checkpoint: " << final_path << std::endl;
 }
 
 void Trainer::train_step(const Batch& batch) {
-    // Forward pass already handled in train loop
-    // In a full implementation, this would compute gradients
     (void)batch;
 }
 
@@ -150,26 +152,32 @@ void Trainer::log_metrics(Index step, const TrainingMetrics& metrics) {
 }
 
 Real Trainer::get_lr(Index step) const {
-    // Linear warmup then cosine decay
     Index warmup = 100;
     Real lr = cfg_.lr;
     if (step < warmup) {
         lr = cfg_.lr * (Real(step) / warmup);
     } else {
         Real progress = Real(step - warmup) / (cfg_.max_steps - warmup + 1);
-        lr = cfg_.lr * 0.5 * (1 + std::cos(progress * PI));
+        if (cfg_.max_steps > warmup) {
+            lr = cfg_.lr * 0.5 * (1 + std::cos(progress * PI));
+        }
     }
     return std::max(lr, cfg_.lr * cfg_.lr_warmup);
 }
 
 void Trainer::save_checkpoint(const std::string& path) {
-    // In a full implementation, this would serialize model weights
-    // For now, create a minimal marker file
     std::ofstream f(path, std::ios::binary);
     if (f.is_open()) {
-        // Save config and step info
         Index step = optimizer_.current_step();
         f.write(reinterpret_cast<const char*>(&step), sizeof(step));
+
+        // Save trained output projection
+        Index n = model_.param_W_out_.size();
+        f.write(reinterpret_cast<const char*>(&n), sizeof(n));
+        f.write(reinterpret_cast<const char*>(model_.param_W_out_.data()), n * sizeof(Real));
+        n = model_.param_b_out_.size();
+        f.write(reinterpret_cast<const char*>(&n), sizeof(n));
+        f.write(reinterpret_cast<const char*>(model_.param_b_out_.data()), n * sizeof(Real));
         f.close();
     }
 }
@@ -180,6 +188,17 @@ void Trainer::load_checkpoint(const std::string& path) {
         Index step;
         f.read(reinterpret_cast<char*>(&step), sizeof(step));
         optimizer_.set_step(step);
+
+        Index n;
+        f.read(reinterpret_cast<char*>(&n), sizeof(n));
+        if (n == (Index)model_.param_W_out_.size()) {
+            f.read(reinterpret_cast<char*>(model_.param_W_out_.data()), n * sizeof(Real));
+        }
+        f.read(reinterpret_cast<char*>(&n), sizeof(n));
+        if (n == (Index)model_.param_b_out_.size()) {
+            f.read(reinterpret_cast<char*>(model_.param_b_out_.data()), n * sizeof(Real));
+        }
+        model_.sync_params_to_ssog();
         f.close();
         std::cout << "  Loaded checkpoint from " << path << " (step " << step << ")" << std::endl;
     }

@@ -50,14 +50,23 @@ public:
 
     // Forward pass for a batch of sequences
     // Input: tokens [batch_size x seq_len]
-    // Output: logits [batch_size x seq_len x vocab_size]
     // Returns training metrics
     TrainingMetrics forward(const Mat& tokens, const Mat& targets);
+
+    // Compute gradients for output layer from last forward pass
+    void compute_gradients(const Mat& targets);
+
+    // Zero accumulated gradients
+    void zero_gradients();
+
+    // Sync SSOG output params <-> flat optimizer arrays
+    void sync_params_to_ssog();
+    void sync_params_from_ssog();
 
     // Get logits from last forward pass
     std::vector<std::vector<Vec>> logits() const { return logits_; }
 
-    // Access components for gradient updates
+    // Access components
     SLIE& slie() { return *slie_; }
     LSSC& lssc() { return *lssc_; }
     STRE& stre() { return *stre_; }
@@ -67,11 +76,15 @@ public:
 
     const ModelConfig& config() const { return cfg_; }
 
-    // Parameter count (trainable)
     Index trainable_params() const;
 
-    // Reset model state for new sequence
     void reset_state();
+
+    // Flat parameter arrays for optimizer (output layer)
+    Vec param_W_out_;
+    Vec grad_W_out_;
+    Vec param_b_out_;
+    Vec grad_b_out_;
 
 private:
     ModelConfig cfg_;
@@ -84,10 +97,10 @@ private:
     std::unique_ptr<SSOG> ssog_;
 
     // Cached outputs from forward pass
-    std::vector<std::vector<Vec>> logits_;  // [batch x seq_len x vocab]
-    std::vector<Mat> hidden_states_;        // [batch x seq_len x d_model]
+    std::vector<std::vector<Vec>> logits_;    // [batch x seq_len x vocab]
+    std::vector<Vec> hidden_out_;             // [batch x seq_len] hidden before output proj
 
-    // Loss computation helpers
+    // Loss helpers
     Real cross_entropy_loss(const Vec& logits, Index target) const;
     Real compute_accuracy(const Vec& logits, Index target) const;
 };

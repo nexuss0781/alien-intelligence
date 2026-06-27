@@ -22,6 +22,7 @@ add_library(ai2_train_lib STATIC
     src/optimizer.cpp
     src/trainer.cpp
 )
+target_link_libraries(ai2_train_lib ai2_core)
 
 foreach(COMPONENT slie lssc stre uq ataa ssog)
     add_executable(test_${COMPONENT} tests/test_${COMPONENT}.cpp)
@@ -29,7 +30,11 @@ foreach(COMPONENT slie lssc stre uq ataa ssog)
     add_test(NAME ${COMPONENT} COMMAND test_${COMPONENT})
 endforeach()
 
+add_executable(test_math tests/test_math.cpp)
+target_link_libraries(test_math ai2_train_lib)
+add_test(NAME math COMMAND test_math)
+
 add_executable(ai2_train src/main_train.cpp)
-target_link_libraries(ai2_train ai2_train_lib ai2_core)
+target_link_libraries(ai2_train ai2_train_lib)
 
 enable_testing()
