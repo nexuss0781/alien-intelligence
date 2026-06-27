@@ -28,7 +28,7 @@ public:
 
     // Learning rate scheduling
     void set_step(Index step) { step_ = step; }
-    Index step() const { return step_; }
+    Index current_step() const { return step_; }
 
     // Get total parameter count
     Index num_params() const;

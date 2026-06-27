@@ -168,7 +168,7 @@ void Trainer::save_checkpoint(const std::string& path) {
     std::ofstream f(path, std::ios::binary);
     if (f.is_open()) {
         // Save config and step info
-        Index step = optimizer_.step();
+        Index step = optimizer_.current_step();
         f.write(reinterpret_cast<const char*>(&step), sizeof(step));
         f.close();
     }
