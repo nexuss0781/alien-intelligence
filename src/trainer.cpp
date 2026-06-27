@@ -131,7 +131,7 @@ TrainingMetrics Trainer::train_with_cache() {
     // Determine starting step from optimizer (resume support)
     Index start_step = optimizer_.current_step();
     Index start_batch_global = start_step;
-    Log("=== Training (GPU + Cache) Started ===");
+    log("=== Training (GPU + Cache) Started ===");
     log("  Run: " + cfg_.run_name + "  Steps: " + std::to_string(total_batches) +
         "  Tokens: " + std::to_string(std::llround(total_tokens)) +
         "  Resume from step: " + std::to_string(start_step));
