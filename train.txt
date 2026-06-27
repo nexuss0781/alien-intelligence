@@ -4,8 +4,12 @@ set -uo pipefail
 echo "=== Alien Intelligence (AI²) Training ==="
 
 # Step 1: Download datasets
-echo "[1/3] Downloading datasets..."
-bash scripts/download_datasets.sh
+echo "[1/3] Downloading datasets (if needed)..."
+if [ ! -f "data/pretrain.txt" ]; then
+    bash scripts/download_datasets.sh
+else
+    echo "  Data already exists, skipping download"
+fi
 
 # Step 2: Build training binary
 echo "[2/3] Building..."
