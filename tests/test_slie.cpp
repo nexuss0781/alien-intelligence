@@ -94,8 +94,8 @@ void test_sketch_update() {
     Vec prev(slie.d_pos(), 0);
     Vec out = slie.forward(42, prev);
     CHECK(out.size() == 64);
-    // Run again — should change sketch state
-    Vec out2 = slie.forward(42, out);
+    // Run again with correct position state — should change sketch state
+    Vec out2 = slie.forward(42, slie.last_position());
     CHECK(out2.size() == 64);
     END_TEST("Sketch updates counters");
 }
