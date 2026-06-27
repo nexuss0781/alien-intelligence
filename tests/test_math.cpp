@@ -295,6 +295,16 @@ void test_stre_math() {
         }
         std::cout << std::endl;
         // With identity restriction maps, L * 1 = 0 for any graph
+        // Direct debug: print lap contents
+        std::cout << "    [debug test] lap.size=" << lap.size();
+        if (!lap.empty()) {
+            std::cout << " lap[0].size=" << lap[0].size() << " lap[0][0]=" << lap[0][0];
+            // Check all elements
+            Real check = 0;
+            for (auto& row : lap) for (auto& v : row) check += std::abs(v);
+            std::cout << " check_total=" << check;
+        }
+        std::cout << std::endl;
         TEST_CLOSE(total, 0.0, 1e-10,
                    "Sheaf Laplacian of constant vector should be near zero, got " + std::to_string(total));
     }
@@ -770,11 +780,14 @@ void test_gradient_math() {
 
     // Print first few logits before step
     {
-        auto logits = model.logits();
-        std::cout << "    [debug] BEFORE step: logits[0][0..7]=";
-        if (!logits.empty() && !logits[0].empty())
+        const auto& logits = model.logits();
+        std::cout << "    [debug] BEFORE step: logits.size=" << logits.size();
+        if (!logits.empty() && !logits[0].empty()) {
+            std::cout << " seq[0].size=" << logits[0].size()
+                      << " vocab=" << logits[0][0].size();
             for (Index i = 0; i < 8 && i < logits[0][0].size(); ++i)
-                std::cout << logits[0][0][i] << ",";
+                std::cout << " " << logits[0][0][i];
+        }
         std::cout << " target=" << targets[0][0] << std::endl;
     }
 
@@ -786,11 +799,14 @@ void test_gradient_math() {
 
     // Print first few logits after step
     {
-        auto logits = model.logits();
-        std::cout << "    [debug] AFTER  step: logits[0][0..7]=";
-        if (!logits.empty() && !logits[0].empty())
+        const auto& logits = model.logits();
+        std::cout << "    [debug] AFTER  step: logits.size=" << logits.size();
+        if (!logits.empty() && !logits[0].empty()) {
+            std::cout << " seq[0].size=" << logits[0].size()
+                      << " vocab=" << logits[0][0].size();
             for (Index i = 0; i < 8 && i < logits[0][0].size(); ++i)
-                std::cout << logits[0][0][i] << ",";
+                std::cout << " " << logits[0][0][i];
+        }
         std::cout << " target=" << targets[0][0] << std::endl;
     }
     std::cout << " target=" << targets[0][0] << std::endl;

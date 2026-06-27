@@ -15,18 +15,18 @@
 [ 20%] Building CXX object CMakeFiles/ai2_core.dir/src/ssog.cpp.o
 [ 24%] Linking CXX static library libai2_core.a
 [ 24%] Built target ai2_core
-[ 27%] Building CXX object CMakeFiles/test_slie.dir/tests/test_slie.cpp.o
-[ 31%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/tokenizer.cpp.o
+[ 27%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/tokenizer.cpp.o
+[ 31%] Building CXX object CMakeFiles/test_slie.dir/tests/test_slie.cpp.o
 [ 34%] Linking CXX executable test_slie
 [ 34%] Built target test_slie
-[ 37%] Building CXX object CMakeFiles/test_lssc.dir/tests/test_lssc.cpp.o
-[ 41%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/dataloader.cpp.o
+[ 37%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/dataloader.cpp.o
+[ 41%] Building CXX object CMakeFiles/test_lssc.dir/tests/test_lssc.cpp.o
 [ 44%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/model.cpp.o
 [ 48%] Linking CXX executable test_lssc
 [ 48%] Built target test_lssc
 [ 51%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/optimizer.cpp.o
-[ 55%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/trainer.cpp.o
-[ 58%] Building CXX object CMakeFiles/test_stre.dir/tests/test_stre.cpp.o
+[ 55%] Building CXX object CMakeFiles/test_stre.dir/tests/test_stre.cpp.o
+[ 58%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/trainer.cpp.o
 [ 62%] Linking CXX executable test_stre
 [ 62%] Built target test_stre
 [ 65%] Building CXX object CMakeFiles/test_uq.dir/tests/test_uq.cpp.o
@@ -61,8 +61,10 @@
 
 [STRE Mathematical Tests]
     [debug] n_nodes=1 n_edges=0
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=16 first_feat[0]=1 result[0][0]=0
     [debug] nodes_.size()=1 restriction_maps_.size()= node[0].neighbors=0
   FAIL: Sheaf Laplacian of constant vector should be near zero, got 1.000000 got 1 expected 0 (diff=1)
+    [debug stre] sheaf_laplacian_all: n=4 nodes_.size()=4 rest_maps_.size()=4 d_node=16 first_feat[0]=-0.641406 result[0][0]=0
 
 [UQ Mathematical Tests]
 
@@ -73,17 +75,59 @@
 [Optimizer Mathematical Tests]
 
 [Gradient Mathematical Tests]
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.173153 result[0][0]=0
     [debug] grad_norm=2.52491 grad_max=1.07206 param_W[0]=0.371773 param_b[0]=0
     [debug] BEFORE step: logits[0][0..7]=-2.77259,-2.77259,-2.77259,-2.77259,-2.77259,-2.77259,-2.77259,-2.77259, target=2
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.173153 result[0][0]=0
     [debug] AFTER  step: logits[0][0..7]=-2.77259,-2.77259,-2.77259,-2.77259,-2.77259,-2.77259,-2.77259,-2.77259, target=2
  target=2
     [debug] loss before=2.77259 after=2.77259 change=0 param_W[0]=0.377146 param_b[0]=-0.01875
   FAIL: Loss should change after SGD step, was 2.772589 now 2.772589 (grad_norm=2.524915)
 
 [Pipeline Integration Test]
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0588751 result[0][0]=0
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.101983 result[0][0]=0
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.024458 result[0][0]=0
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0163873 result[0][0]=0
     [debug] step=1 loss=2.772589 |g|=11.8163 b_out[0]: 0.0000 -> -0.0100
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
     [debug] step=2 loss=2.772589 |g|=11.8163 b_out[0]: -0.0100 -> -0.0200
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
     [debug] step=3 loss=2.772589 |g|=11.8163 b_out[0]: -0.0200 -> -0.0300
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
+    [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
     [debug] step=10 loss=2.772589 |g|=11.8163 b_out[0]: -0.0900 -> -0.1000
   FAIL: Loss should change during training. All values = 2.772589
   Loss trajectory: 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 
