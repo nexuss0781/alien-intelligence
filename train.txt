@@ -16,6 +16,12 @@ echo "[2/3] Building with CUDA..."
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j"$(nproc)" --target ai2_train
 
-# Step 3: Run training (GPU accelerated)
+# Step 3: Run training (GPU accelerated) — resume if checkpoint exists
 echo "[3/3] Starting training (GPU) ..."
-./build/ai2_train
+if ls checkpoints/*_step_*.bin 2>/dev/null | head -1 | grep -q .; then
+    echo "  Checkpoint found, resuming..."
+    ./build/ai2_train --resume
+else
+    echo "  No checkpoint found, starting fresh..."
+    ./build/ai2_train
+fi
