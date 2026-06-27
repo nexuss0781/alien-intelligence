@@ -22,23 +22,23 @@ namespace test {
 //  Utility helpers
 // ============================================================
 
-static int failures = 0;
-static int total = 0;
+static int test_failures = 0;
+static int test_count = 0;
 
 #define TEST_CHECK(cond, msg) do { \
-    total++; \
+    test_count++; \
     if (!(cond)) { \
         std::cerr << "  FAIL: " << msg << std::endl; \
-        failures++; \
+        test_failures++; \
     } \
 } while(0)
 
 #define TEST_CLOSE(a, b, tol, msg) do { \
-    total++; \
+    test_count++; \
     if (std::abs((a) - (b)) > tol) { \
         std::cerr << "  FAIL: " << msg << " got " << (a) << " expected " << (b) \
                   << " (diff=" << std::abs((a)-(b)) << ")" << std::endl; \
-        failures++; \
+        test_failures++; \
     } \
 } while(0)
 
@@ -910,9 +910,9 @@ int main() {
     ai2::test::test_pipeline_integration();
 
     std::cout << "\n=== Results ===" << std::endl;
-    std::cout << "  Total: " << ai2::test::total << std::endl;
-    std::cout << "  Passed: " << (ai2::test::total - ai2::test::failures) << std::endl;
-    std::cout << "  Failed: " << ai2::test::failures << std::endl;
+    std::cout << "  Total: " << ai2::test::test_count << std::endl;
+    std::cout << "  Passed: " << (ai2::test::test_count - ai2::test::test_failures) << std::endl;
+    std::cout << "  Failed: " << ai2::test::test_failures << std::endl;
 
-    return ai2::test::failures > 0 ? 1 : 0;
+    return ai2::test::test_failures > 0 ? 1 : 0;
 }

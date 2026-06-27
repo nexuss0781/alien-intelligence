@@ -4,34 +4,34 @@
 -- Check for working CXX compiler: /usr/bin/c++ - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Configuring done (0.2s)
+-- Configuring done (0.3s)
 -- Generating done (0.0s)
 -- Build files have been written to: /content/alien-intelligence/build
-[  6%] Building CXX object CMakeFiles/ai2_core.dir/src/lssc.cpp.o
 [  6%] Building CXX object CMakeFiles/ai2_core.dir/src/slie.cpp.o
+[  6%] Building CXX object CMakeFiles/ai2_core.dir/src/lssc.cpp.o
 [ 10%] Building CXX object CMakeFiles/ai2_core.dir/src/stre.cpp.o
 [ 13%] Building CXX object CMakeFiles/ai2_core.dir/src/uq.cpp.o
 [ 17%] Building CXX object CMakeFiles/ai2_core.dir/src/ataa.cpp.o
 [ 20%] Building CXX object CMakeFiles/ai2_core.dir/src/ssog.cpp.o
 [ 24%] Linking CXX static library libai2_core.a
 [ 24%] Built target ai2_core
-[ 27%] Building CXX object CMakeFiles/test_slie.dir/tests/test_slie.cpp.o
+[ 31%] Building CXX object CMakeFiles/test_slie.dir/tests/test_slie.cpp.o
 [ 31%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/tokenizer.cpp.o
 [ 34%] Linking CXX executable test_slie
 [ 34%] Built target test_slie
 [ 37%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/dataloader.cpp.o
-[ 41%] Building CXX object CMakeFiles/test_lssc.dir/tests/test_lssc.cpp.o
-[ 44%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/model.cpp.o
-[ 48%] Linking CXX executable test_lssc
-[ 48%] Built target test_lssc
-[ 51%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/optimizer.cpp.o
-[ 55%] Building CXX object CMakeFiles/test_stre.dir/tests/test_stre.cpp.o
-[ 58%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/trainer.cpp.o
-[ 62%] Linking CXX executable test_stre
-[ 62%] Built target test_stre
+[ 41%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/model.cpp.o
+[ 44%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/optimizer.cpp.o
+[ 48%] Building CXX object CMakeFiles/test_lssc.dir/tests/test_lssc.cpp.o
+[ 51%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/trainer.cpp.o
+[ 55%] Linking CXX executable test_lssc
+[ 55%] Built target test_lssc
+[ 58%] Building CXX object CMakeFiles/test_stre.dir/tests/test_stre.cpp.o
+[ 62%] Linking CXX static library libai2_train_lib.a
+[ 62%] Built target ai2_train_lib
 [ 65%] Building CXX object CMakeFiles/test_uq.dir/tests/test_uq.cpp.o
-[ 68%] Linking CXX static library libai2_train_lib.a
-[ 68%] Built target ai2_train_lib
+[ 68%] Linking CXX executable test_stre
+[ 68%] Built target test_stre
 [ 72%] Building CXX object CMakeFiles/test_ataa.dir/tests/test_ataa.cpp.o
 [ 75%] Linking CXX executable test_uq
 [ 75%] Built target test_uq
@@ -60,11 +60,9 @@
 [LSSC Mathematical Tests]
 
 [STRE Mathematical Tests]
-    [debug] n_nodes=1 n_edges=0
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=16 first_feat[0]=1 result[0][0]=0
-    [debug] nodes_.size()=1 restriction_maps_.size()= node[0].neighbors=0
-    [debug test] lap.size=1 lap[0].size=16 lap[0][0]=0 check_total=0
-  FAIL: Sheaf Laplacian of constant vector should be near zero, got 1.000000 got 1 expected 0 (diff=1)
+    [debug] n_nodes=1 lap[0][0]=0 total=0
+  FAIL: Sheaf Laplacian of constant vector should be near zero got 1 expected 0 (diff=1)
     [debug stre] sheaf_laplacian_all: n=4 nodes_.size()=4 rest_maps_.size()=4 d_node=16 first_feat[0]=-0.641406 result[0][0]=0
 
 [UQ Mathematical Tests]
@@ -79,6 +77,7 @@
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.173153 result[0][0]=0
     [debug] grad_norm=2.52491 grad_max=1.07206 param_W[0]=0.371773 param_b[0]=0
     [debug] BEFORE step: logits.size=1 seq[0].size=3 vocab=16 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 target=2
+    [debug model] sync: b_out[0] 0 -> -0.01875 (param=-0.01875) W_out[0][0] 0.371773 -> 0.377146 (param=0.377146) n_vocab=16 d_model=8 W_out.size=16 b_out.size=16
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.173153 result[0][0]=0
     [debug] AFTER  step: logits.size=1 seq[0].size=3 vocab=16 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 -2.77259 target=2
  target=2
@@ -90,45 +89,55 @@
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.101983 result[0][0]=0
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.024458 result[0][0]=0
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0163873 result[0][0]=0
+    [debug model] sync: b_out[0] 0 -> -0.01 (param=-0.01) W_out[0][0] 0.371773 -> 0.381773 (param=0.381773) n_vocab=16 d_model=8 W_out.size=16 b_out.size=16
     [debug] step=1 loss=2.772589 |g|=11.8163 b_out[0]: 0.0000 -> -0.0100
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug model] sync: b_out[0] -0.0100 -> -0.0200 (param=-0.0200) W_out[0][0] 0.3818 -> 0.3918 (param=0.3918) n_vocab=16 d_model=8 W_out.size=16 b_out.size=16
     [debug] step=2 loss=2.772589 |g|=11.8163 b_out[0]: -0.0100 -> -0.0200
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug model] sync: b_out[0] -0.0200 -> -0.0300 (param=-0.0300) W_out[0][0] 0.3918 -> 0.4018 (param=0.4018) n_vocab=16 d_model=8 W_out.size=16 b_out.size=16
     [debug] step=3 loss=2.772589 |g|=11.8163 b_out[0]: -0.0200 -> -0.0300
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug model] sync: b_out[0] -0.0300 -> -0.0400 (param=-0.0400) W_out[0][0] 0.4018 -> 0.4118 (param=0.4118) n_vocab=16 d_model=8 W_out.size=16 b_out.size=16
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug model] sync: b_out[0] -0.0400 -> -0.0500 (param=-0.0500) W_out[0][0] 0.4118 -> 0.4218 (param=0.4218) n_vocab=16 d_model=8 W_out.size=16 b_out.size=16
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug model] sync: b_out[0] -0.0500 -> -0.0600 (param=-0.0600) W_out[0][0] 0.4218 -> 0.4318 (param=0.4318) n_vocab=16 d_model=8 W_out.size=16 b_out.size=16
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug model] sync: b_out[0] -0.0600 -> -0.0700 (param=-0.0700) W_out[0][0] 0.4318 -> 0.4418 (param=0.4418) n_vocab=16 d_model=8 W_out.size=16 b_out.size=16
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug model] sync: b_out[0] -0.0700 -> -0.0800 (param=-0.0800) W_out[0][0] 0.4418 -> 0.4518 (param=0.4518) n_vocab=16 d_model=8 W_out.size=16 b_out.size=16
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug model] sync: b_out[0] -0.0800 -> -0.0900 (param=-0.0900) W_out[0][0] 0.4518 -> 0.4618 (param=0.4618) n_vocab=16 d_model=8 W_out.size=16 b_out.size=16
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0589 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.1020 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=-0.0245 result[0][0]=0.0000
     [debug stre] sheaf_laplacian_all: n=1 nodes_.size()=1 rest_maps_.size()=1 d_node=4 first_feat[0]=0.0164 result[0][0]=0.0000
+    [debug model] sync: b_out[0] -0.0900 -> -0.1000 (param=-0.1000) W_out[0][0] 0.4618 -> 0.4718 (param=0.4718) n_vocab=16 d_model=8 W_out.size=16 b_out.size=16
     [debug] step=10 loss=2.772589 |g|=11.8163 b_out[0]: -0.0900 -> -0.1000
   FAIL: Loss should change during training. All values = 2.772589
   Loss trajectory: 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 2.7726 

@@ -120,22 +120,22 @@ Vec SSOG::sparse_mixture(const Vec& h) const {
 }
 
 Vec SSOG::base_distribution(const Vec& mixture) const {
-    // p(y) = softmax(W_out · mixture + b_out)
     Vec logits = mat_vec(W_out_, mixture);
     logits = elem_add(logits, b_out_);
-    // Debug: check if logits are uniform (all same)
-    if (logits.size() > 1) {
-        Real max_l = logits[0], min_l = logits[0], sum_l = 0;
-        for (auto& l : logits) { max_l = std::max(max_l, l); min_l = std::min(min_l, l); sum_l += l; }
-        bool all_neg = true;
-        for (auto& l : logits) if (l > -1) { all_neg = false; break; }
-        if (max_l - min_l < 1e-10 || all_neg) {
-            std::cout << "    [debug ssog] base_dist: mixture[0]=" << (mixture.empty() ? -999 : mixture[0])
-                      << " W_out[0][0]=" << (W_out_.empty() || W_out_[0].empty() ? -999 : W_out_[0][0])
-                      << " b_out[0]=" << (b_out_.empty() ? -999 : b_out_[0])
-                      << " logit[0]=" << logits[0] << " logit[1]=" << (logits.size() > 1 ? logits[1] : -999)
-                      << " max-min=" << (max_l - min_l) << std::endl;
-        }
+    // Debug: always print for first few calls
+    static int call_count = 0;
+    if (call_count < 10) {
+        call_count++;
+        Real mx = logits[0], mn = logits[0];
+        for (auto& l : logits) { mx = std::max(mx, l); mn = std::min(mn, l); }
+        std::cout << "    [debug ssog] base_dist call=" << call_count
+                  << " mixture[0]=" << (mixture.empty() ? -999 : mixture[0])
+                  << " W_out[0][0]=" << (W_out_.empty() || W_out_[0].empty() ? -999 : W_out_[0][0])
+                  << " b_out[0]=" << (b_out_.empty() ? -999 : b_out_[0])
+                  << " logit[0]=" << logits[0] << " logit[1]=" << (logits.size() > 1 ? logits[1] : -999)
+                  << " max-min=" << (mx - mn)
+                  << " n_vocab=" << n_vocab_ << " d_model=" << d_model_
+                  << std::endl;
     }
     return softmax(logits);
 }
