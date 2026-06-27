@@ -184,24 +184,12 @@ void Model::sync_params_to_ssog() {
     Index d_model = cfg_.d_model;
     auto& W_out = ssog_->W_out();
     auto& b_out = ssog_->b_out();
-    Real old_b0 = b_out.empty() ? 0 : b_out[0];
-    Real old_W00 = (W_out.empty() || W_out[0].empty()) ? 0 : W_out[0][0];
     for (Index i = 0; i < n_vocab; ++i) {
         b_out[i] = param_b_out_[i];
         for (Index j = 0; j < d_model; ++j) {
             W_out[i][j] = param_W_out_[i * d_model + j];
         }
     }
-    Real new_b0 = b_out.empty() ? 0 : b_out[0];
-    Real new_W00 = (W_out.empty() || W_out[0].empty()) ? 0 : W_out[0][0];
-    std::cout << "    [debug model] sync: b_out[0] " << old_b0 << " -> " << new_b0
-              << " (param=" << param_b_out_[0] << ")"
-              << " W_out[0][0] " << old_W00 << " -> " << new_W00
-              << " (param=" << param_W_out_[0] << ")"
-              << " n_vocab=" << n_vocab << " d_model=" << d_model
-              << " W_out.size=" << W_out.size()
-              << " b_out.size=" << b_out.size()
-              << std::endl;
 }
 
 void Model::sync_params_from_ssog() {
