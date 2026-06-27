@@ -25,7 +25,6 @@ Model::Model(const ModelConfig& cfg) : cfg_(cfg) {
                                    cfg.n_experts, cfg.k_experts,
                                    cfg.n_lsh_tables);
 
-    // Initialize flat param arrays from SSOG output layer
     Index n_vocab = cfg.vocab_size;
     Index d_model = cfg.d_model;
     param_W_out_.resize(n_vocab * d_model, 0);
@@ -33,6 +32,17 @@ Model::Model(const ModelConfig& cfg) : cfg_(cfg) {
     param_b_out_.resize(n_vocab, 0);
     grad_b_out_.resize(n_vocab, 0);
     sync_params_from_ssog();
+
+    gpu_ctx_ = gpu::init(ssog_->W_out(), ssog_->b_out());
+    if (gpu_ctx_) {
+        std::cout << "  GPU acceleration enabled (gradient computation)" << std::endl;
+    } else {
+        std::cout << "  GPU not available, using CPU fallback" << std::endl;
+    }
+}
+
+Model::~Model() {
+    gpu::destroy(gpu_ctx_);
 }
 
 TrainingMetrics Model::forward(const Mat& tokens, const Mat& targets) {
@@ -49,7 +59,6 @@ TrainingMetrics Model::forward(const Mat& tokens, const Mat& targets) {
     Real total_tokens_valid = 0;
 
     for (Index b = 0; b < batch_size; ++b) {
-        // SLIE — encode each token
         Mat embeddings(seq_len, Vec(cfg_.d_model, 0));
         Vec prev_pos(cfg_.d_pos, 0);
         slie_->reset_position();
@@ -61,10 +70,8 @@ TrainingMetrics Model::forward(const Mat& tokens, const Mat& targets) {
             prev_pos = slie_->last_position();
         }
 
-        // LSSC — process sequence
         Mat hidden = lssc_->forward(embeddings);
 
-        // STRE — build reasoning graph and propagate
         auto stre_features = stre_->forward(hidden, cfg_.n_layers);
         Real conflict = 0;
         if (!stre_features.empty()) {
@@ -72,15 +79,9 @@ TrainingMetrics Model::forward(const Mat& tokens, const Mat& targets) {
         }
         total_conflict += conflict;
 
-        // STRE feature enhancement: map position t → node idx
         for (Index t = 0; t < seq_len; ++t) {
             Vec& h = hidden[t];
-            Index node_idx = t;
-            if (t < stre_features.size()) {
-                node_idx = t;
-            } else {
-                node_idx = stre_features.size() - 1;
-            }
+            Index node_idx = t < stre_features.size() ? t : stre_features.size() - 1;
             if (node_idx < stre_features.size()) {
                 for (Index i = 0; i < std::min(cfg_.d_node, cfg_.d_model); ++i) {
                     h[i] += 0.1 * stre_features[node_idx][i % cfg_.d_node];
@@ -88,41 +89,34 @@ TrainingMetrics Model::forward(const Mat& tokens, const Mat& targets) {
             }
         }
 
-        // Per-position UQ + SSOG output
+        // Cache hidden states
+        for (Index t = 0; t < seq_len; ++t) {
+            if (hidden_out_.size() <= b * seq_len + t)
+                hidden_out_.resize((b + 1) * seq_len);
+            hidden_out_[b * seq_len + t] = hidden[t];
+        }
+
         std::vector<Vec> seq_logits(seq_len, Vec(cfg_.vocab_size, 0));
 
         for (Index t = 0; t < seq_len; ++t) {
             const Vec& h = hidden[t];
             Index target = targets[b][t];
-
-            // Skip padding positions
             if (target == 0) continue;
 
-            // UQ
             Vec dummy_probs(cfg_.vocab_size, 1.0 / cfg_.vocab_size);
             auto uq_result = uq_->step(dummy_probs, conflict, 0.1);
 
-            // SSOG — output distribution
             auto output = ssog_->forward(h,
                                           uq_result.conformal_uncertainty,
                                           uq_result.conformal_set);
-
-            // Convert calibrated probs to logits (inverse softmax approximation)
             for (Index i = 0; i < cfg_.vocab_size; ++i) {
                 seq_logits[t][i] = std::log(output.calibrated_probs[i] + EPS);
             }
 
-            // Compute loss and accuracy
             Real loss = cross_entropy_loss(seq_logits[t], target);
             total_loss += loss;
             total_correct += compute_accuracy(seq_logits[t], target);
             total_tokens_valid += 1;
-
-            // Cache hidden state for gradient computation
-            if (hidden_out_.size() <= b * seq_len + t) {
-                hidden_out_.resize((b + 1) * seq_len);
-            }
-            hidden_out_[b * seq_len + t] = h;
         }
 
         logits_.push_back(seq_logits);
@@ -142,12 +136,20 @@ void Model::compute_gradients(const Mat& targets) {
     Index batch_size = targets.size();
     Index seq_len = batch_size > 0 ? targets[0].size() : 0;
 
-    // Accumulate gradients across all valid positions
+    if (gpu_ctx_) {
+        gpu::batched_gradient(gpu_ctx_, hidden_out_, logits_, targets,
+                               grad_W_out_, grad_b_out_,
+                               hidden_out_.size(),
+                               cfg_.vocab_size, cfg_.d_model,
+                               batch_size, seq_len);
+        return;
+    }
+
+    // CPU fallback
     for (Index b = 0; b < batch_size; ++b) {
         for (Index t = 0; t < seq_len; ++t) {
             Index target = targets[b][t];
-            if (target == 0) continue;  // skip padding
-
+            if (target == 0) continue;
             if (b * seq_len + t >= hidden_out_.size()) continue;
             if (b >= logits_.size() || t >= logits_[b].size()) continue;
 
@@ -156,12 +158,7 @@ void Model::compute_gradients(const Mat& targets) {
             Index n_vocab = cfg_.vocab_size;
             Index d_model = cfg_.d_model;
 
-            // Softmax probabilities
             Vec p = softmax(logits);
-
-            // Gradient of cross-entropy + softmax: dL/dz_i = p_i - (i == target)
-            // dL/dW_out[i][j] = (p_i - delta_{i,target}) * h[j]
-            // dL/db_out[i]    = p_i - delta_{i,target}
             for (Index i = 0; i < n_vocab; ++i) {
                 Real dL_dz = p[i] - (i == target ? 1.0 : 0.0);
                 grad_b_out_[i] += dL_dz;
@@ -179,7 +176,6 @@ void Model::zero_gradients() {
 }
 
 void Model::sync_params_to_ssog() {
-    // Copy flat arrays back to SSOG's W_out and b_out
     Index n_vocab = cfg_.vocab_size;
     Index d_model = cfg_.d_model;
     auto& W_out = ssog_->W_out();
@@ -189,6 +185,10 @@ void Model::sync_params_to_ssog() {
         for (Index j = 0; j < d_model; ++j) {
             W_out[i][j] = param_W_out_[i * d_model + j];
         }
+    }
+    if (gpu_ctx_) {
+        gpu::sync_weights(gpu_ctx_, param_W_out_, param_b_out_,
+                          n_vocab, d_model);
     }
 }
 
@@ -222,16 +222,13 @@ Real Model::compute_accuracy(const Vec& logits, Index target) const {
 
 Index Model::trainable_params() const {
     Index count = 0;
-    // Output projection
-    count += cfg_.vocab_size * cfg_.d_model;  // W_out
-    count += cfg_.vocab_size;                 // b_out
-    // Expert weights
+    count += cfg_.vocab_size * cfg_.d_model;
+    count += cfg_.vocab_size;
     for (Index e = 0; e < cfg_.n_experts; ++e) {
-        count += cfg_.d_model * cfg_.d_model; // expert weights
-        count += cfg_.d_model;                // expert bias
+        count += cfg_.d_model * cfg_.d_model;
+        count += cfg_.d_model;
     }
-    // Gating
-    count += cfg_.d_model * cfg_.d_model;     // W_gate
+    count += cfg_.d_model * cfg_.d_model;
     return count;
 }
 

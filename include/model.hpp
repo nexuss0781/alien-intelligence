@@ -7,6 +7,7 @@
 #include "ataa.hpp"
 #include "ssog.hpp"
 #include "tokenizer.hpp"
+#include "gpu_backend.hpp"
 #include <memory>
 
 namespace ai2 {
@@ -47,6 +48,7 @@ struct ModelConfig {
 class Model {
 public:
     Model(const ModelConfig& cfg);
+    ~Model();
 
     // Forward pass for a batch of sequences
     // Input: tokens [batch_size x seq_len]
@@ -95,6 +97,9 @@ private:
     std::unique_ptr<UQ> uq_;
     std::unique_ptr<ATAA> ataa_;
     std::unique_ptr<SSOG> ssog_;
+
+    // GPU backend
+    gpu::GPUContext* gpu_ctx_ = nullptr;
 
     // Cached outputs from forward pass
     std::vector<std::vector<Vec>> logits_;    // [batch x seq_len x vocab]

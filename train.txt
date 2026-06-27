@@ -11,12 +11,11 @@ else
     echo "  Data already exists, skipping download"
 fi
 
-# Step 2: Build training binary
-echo "[2/3] Building..."
+# Step 2: Build training binary with CUDA
+echo "[2/3] Building with CUDA..."
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j"$(nproc)" --target ai2_train
 
-# Step 3: Run training (use all available CPU cores)
-export OMP_NUM_THREADS="${OMP_NUM_THREADS:-$(nproc)}"
-echo "[3/3] Starting training (OMP_NUM_THREADS=$OMP_NUM_THREADS) ..."
+# Step 3: Run training (GPU accelerated)
+echo "[3/3] Starting training (GPU) ..."
 ./build/ai2_train

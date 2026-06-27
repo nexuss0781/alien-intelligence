@@ -10,10 +10,6 @@
 using namespace ai2;
 
 int main(int /*argc*/, char** /*argv*/) {
-    #ifdef _OPENMP
-    omp_set_num_threads(omp_get_num_procs());
-    std::cout << "OpenMP enabled: " << omp_get_num_procs() << " threads" << std::endl;
-    #endif
     std::cout << "=== Alien Intelligence (AI²) Training ===" << std::endl;
 
     // Configuration
