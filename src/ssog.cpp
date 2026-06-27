@@ -106,6 +106,16 @@ Vec SSOG::sparse_mixture(const Vec& h) const {
             result[j] += weights[i] * expert_out[j];
         }
     }
+    // Debug: check if mixture is all zeros
+    Real max_r = 0;
+    for (auto& r : result) max_r = std::max(max_r, std::abs(r));
+    if (max_r < 1e-10) {
+        std::cout << "    [debug ssog] sparse_mixture: ALL ZERO! h[0]=" << (h.empty() ? -999 : h[0])
+                  << " n_experts=" << experts.size()
+                  << " first_exp=" << (experts.empty() ? -1 : experts[0])
+                  << " weight[0]=" << (weights.empty() ? -999 : weights[0])
+                  << std::endl;
+    }
     return result;
 }
 
@@ -113,6 +123,20 @@ Vec SSOG::base_distribution(const Vec& mixture) const {
     // p(y) = softmax(W_out · mixture + b_out)
     Vec logits = mat_vec(W_out_, mixture);
     logits = elem_add(logits, b_out_);
+    // Debug: check if logits are uniform (all same)
+    if (logits.size() > 1) {
+        Real max_l = logits[0], min_l = logits[0], sum_l = 0;
+        for (auto& l : logits) { max_l = std::max(max_l, l); min_l = std::min(min_l, l); sum_l += l; }
+        bool all_neg = true;
+        for (auto& l : logits) if (l > -1) { all_neg = false; break; }
+        if (max_l - min_l < 1e-10 || all_neg) {
+            std::cout << "    [debug ssog] base_dist: mixture[0]=" << (mixture.empty() ? -999 : mixture[0])
+                      << " W_out[0][0]=" << (W_out_.empty() || W_out_[0].empty() ? -999 : W_out_[0][0])
+                      << " b_out[0]=" << (b_out_.empty() ? -999 : b_out_[0])
+                      << " logit[0]=" << logits[0] << " logit[1]=" << (logits.size() > 1 ? logits[1] : -999)
+                      << " max-min=" << (max_l - min_l) << std::endl;
+        }
+    }
     return softmax(logits);
 }
 

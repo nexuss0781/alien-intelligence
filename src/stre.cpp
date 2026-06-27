@@ -153,6 +153,14 @@ Mat STRE::sheaf_laplacian_all(const std::vector<Vec>& features) const {
     Index n = features.size();
     Mat result(n, Vec(d_node_, 0));
 
+    std::cout << "    [debug stre] sheaf_laplacian_all: n=" << n
+              << " nodes_.size()=" << nodes_.size()
+              << " rest_maps_.size()=" << restriction_maps_.size()
+              << " d_node=" << d_node_
+              << " first_feat[0]=" << (n > 0 && features[0].size() > 0 ? features[0][0] : -999)
+              << " result[0][0]=" << (result.size() > 0 && result[0].size() > 0 ? result[0][0] : -999)
+              << std::endl;
+
     for (Index v = 0; v < n; ++v) {
         const auto& nbs = nodes_[v].neighbors;
         for (Index ni = 0; ni < nbs.size(); ++ni) {
