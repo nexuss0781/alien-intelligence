@@ -50,13 +50,23 @@ public:
     Model(const ModelConfig& cfg);
     ~Model();
 
-    // Forward pass for a batch of sequences
-    // Input: tokens [batch_size x seq_len]
-    // Returns training metrics
+    // CPU forward pass for a batch of sequences
     TrainingMetrics forward(const Mat& tokens, const Mat& targets);
 
     // Compute gradients for output layer from last forward pass
     void compute_gradients(const Mat& targets);
+
+    // GPU-accelerated forward+backward using pre-computed hidden states + routing
+    // hidden_flat: [n_positions * d_model] floats
+    // expert_idxs_flat: [n_positions * k_experts] ints
+    // expert_wgts_flat: [n_positions * k_experts] floats
+    // targets: [batch_size x seq_len] token IDs
+    // Returns loss
+    Real gpu_forward_backward(const float* hidden_flat,
+                              const int* expert_idxs_flat,
+                              const float* expert_wgts_flat,
+                              const Mat& targets,
+                              Index n_positions);
 
     // Zero accumulated gradients
     void zero_gradients();
@@ -82,6 +92,9 @@ public:
 
     void reset_state();
 
+    // GPU context access (for HiddenCache to copy to GPU)
+    gpu::GPUContext* gpu_ctx() { return gpu_ctx_; }
+
     // Flat parameter arrays for optimizer (output layer)
     Vec param_W_out_;
     Vec grad_W_out_;
@@ -102,8 +115,14 @@ private:
     gpu::GPUContext* gpu_ctx_ = nullptr;
 
     // Cached outputs from forward pass
-    std::vector<std::vector<Vec>> logits_;    // [batch x seq_len x vocab]
-    std::vector<Vec> hidden_out_;             // [batch x seq_len] hidden before output proj
+    std::vector<std::vector<Vec>> logits_;
+    std::vector<Vec> hidden_out_;
+
+    // GPU scratch buffers (host-side, reused)
+    std::vector<float> gpu_hidden_buf_;
+    std::vector<int> gpu_idx_buf_;
+    std::vector<float> gpu_wgt_buf_;
+    std::vector<int> gpu_target_buf_;
 
     // Loss helpers
     Real cross_entropy_loss(const Vec& logits, Index target) const;

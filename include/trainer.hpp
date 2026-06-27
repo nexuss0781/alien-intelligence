@@ -3,6 +3,7 @@
 #include "model.hpp"
 #include "dataloader.hpp"
 #include "optimizer.hpp"
+#include "hidden_cache.hpp"
 #include <string>
 #include <vector>
 #include <map>
@@ -19,10 +20,10 @@ struct TrainConfig {
     Real lr_warmup = 0.1;
     Real weight_decay = 0.01;
     Real grad_clip = 1.0;
-    Index max_steps = 0;  // 0 = full epochs
+    Index max_steps = 0;
     std::string checkpoint_dir = "checkpoints";
     std::string run_name = "ai2_run";
-    std::string log_file = "";  // empty = stdout only
+    std::string log_file = "";
 };
 
 class Trainer {
@@ -44,8 +45,10 @@ private:
     Optimizer optimizer_;
     std::vector<TrainingMetrics> metrics_;
     std::ofstream log_stream_;
+    HiddenCache hidden_cache_;
 
-    void train_step(const Batch& batch);
+    void build_hidden_cache();
+    TrainingMetrics train_with_cache();
     TrainingMetrics evaluate();
     void log_metrics(Index step, const TrainingMetrics& metrics,
                      const std::map<std::string, Real>& extra = {});

@@ -35,6 +35,7 @@ add_library(ai2_train_lib STATIC
     src/model.cpp
     src/optimizer.cpp
     src/trainer.cpp
+    src/hidden_cache.cpp
 )
 target_link_libraries(ai2_train_lib ai2_core ai2_gpu)
 

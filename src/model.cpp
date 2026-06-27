@@ -2,6 +2,7 @@
 #include <cmath>
 #include <algorithm>
 #include <numeric>
+#include <cstring>
 
 namespace ai2 {
 
@@ -33,9 +34,12 @@ Model::Model(const ModelConfig& cfg) : cfg_(cfg) {
     grad_b_out_.resize(n_vocab, 0);
     sync_params_from_ssog();
 
-    gpu_ctx_ = gpu::init(ssog_->W_out(), ssog_->b_out());
+    gpu_ctx_ = gpu::init(ssog_->W_out(), ssog_->b_out(),
+                         ssog_->expert_weights_, ssog_->expert_biases_,
+                         64 * 128,
+                         cfg.n_experts, cfg.k_experts);
     if (gpu_ctx_) {
-        std::cout << "  GPU acceleration enabled (gradient computation)" << std::endl;
+        std::cout << "  GPU acceleration enabled (full forward+backward)" << std::endl;
     } else {
         std::cout << "  GPU not available, using CPU fallback" << std::endl;
     }
@@ -89,7 +93,6 @@ TrainingMetrics Model::forward(const Mat& tokens, const Mat& targets) {
             }
         }
 
-        // Cache hidden states
         for (Index t = 0; t < seq_len; ++t) {
             if (hidden_out_.size() <= b * seq_len + t)
                 hidden_out_.resize((b + 1) * seq_len);
@@ -136,16 +139,6 @@ void Model::compute_gradients(const Mat& targets) {
     Index batch_size = targets.size();
     Index seq_len = batch_size > 0 ? targets[0].size() : 0;
 
-    if (gpu_ctx_) {
-        gpu::batched_gradient(gpu_ctx_, hidden_out_, logits_, targets,
-                               grad_W_out_, grad_b_out_,
-                               hidden_out_.size(),
-                               cfg_.vocab_size, cfg_.d_model,
-                               batch_size, seq_len);
-        return;
-    }
-
-    // CPU fallback
     for (Index b = 0; b < batch_size; ++b) {
         for (Index t = 0; t < seq_len; ++t) {
             Index target = targets[b][t];
@@ -170,6 +163,66 @@ void Model::compute_gradients(const Mat& targets) {
     }
 }
 
+Real Model::gpu_forward_backward(const float* hidden_flat,
+                                  const int* expert_idxs_flat,
+                                  const float* expert_wgts_flat,
+                                  const Mat& targets,
+                                  Index n_positions)
+{
+    if (!gpu_ctx_ || n_positions == 0) return 0.0f;
+
+    Index d_model = cfg_.d_model;
+    Index k = cfg_.k_experts;
+    Index n_vocab = cfg_.vocab_size;
+
+    // Filter out padding positions (target == 0 or out of range)
+    std::vector<int> valid_idx;
+    valid_idx.reserve(n_positions);
+    Index batch_size = targets.size();
+    Index seq_len = batch_size > 0 ? targets[0].size() : 0;
+
+    for (Index b = 0; b < batch_size; ++b) {
+        for (Index t = 0; t < seq_len; ++t) {
+            Index tok = targets[b][t];
+            if (tok > 0 && tok < n_vocab)
+                valid_idx.push_back(static_cast<int>(b * seq_len + t));
+        }
+    }
+
+    Index v = valid_idx.size();
+    if (v == 0) return 0.0f;
+
+    // Build compacted arrays
+    std::vector<float> compact_hidden(v * d_model);
+    std::vector<int> compact_idxs(v * k);
+    std::vector<float> compact_wgts(v * k);
+    std::vector<int> compact_targets(v);
+
+    for (Index i = 0; i < v; ++i) {
+        Index src = valid_idx[i];
+        compact_targets[i] = static_cast<int>(targets[src / seq_len][src % seq_len]);
+        for (Index j = 0; j < d_model; ++j)
+            compact_hidden[i * d_model + j] = hidden_flat[src * d_model + j];
+        for (Index kk = 0; kk < k; ++kk) {
+            compact_idxs[i * k + kk] = expert_idxs_flat[src * k + kk];
+            compact_wgts[i * k + kk] = expert_wgts_flat[src * k + kk];
+        }
+    }
+
+    // GPU forward + backward
+    zero_gradients();
+    float total_loss = gpu::forward_backward(gpu_ctx_,
+                                              compact_hidden.data(),
+                                              compact_idxs.data(),
+                                              compact_wgts.data(),
+                                              compact_targets.data(),
+                                              static_cast<int>(v),
+                                              grad_W_out_, grad_b_out_,
+                                              n_vocab, d_model);
+
+    return static_cast<Real>(total_loss);
+}
+
 void Model::zero_gradients() {
     std::fill(grad_W_out_.begin(), grad_W_out_.end(), 0);
     std::fill(grad_b_out_.begin(), grad_b_out_.end(), 0);
@@ -187,8 +240,17 @@ void Model::sync_params_to_ssog() {
         }
     }
     if (gpu_ctx_) {
-        gpu::sync_weights(gpu_ctx_, param_W_out_, param_b_out_,
-                          n_vocab, d_model);
+        std::vector<float> h_W_out(n_vocab * d_model);
+        std::vector<float> h_b_out(n_vocab);
+        for (Index i = 0; i < n_vocab; ++i) {
+            h_b_out[i] = static_cast<float>(param_b_out_[i]);
+            for (Index j = 0; j < d_model; ++j)
+                h_W_out[i * d_model + j] = static_cast<float>(param_W_out_[i * d_model + j]);
+        }
+        gpu::sync_weights(gpu_ctx_,
+                          h_W_out.data(), h_b_out.data(),
+                          nullptr, nullptr,
+                          n_vocab, d_model, 0);
     }
 }
 

@@ -17,29 +17,109 @@ Trainer::Trainer(Model& model, DataLoader& train_loader,
     optimizer_.add_param("W_out", &model_.param_W_out_, &model_.grad_W_out_);
     optimizer_.add_param("b_out", &model_.param_b_out_, &model_.grad_b_out_);
 
-    // Open log file if configured
     if (!cfg_.log_file.empty()) {
         log_stream_.open(cfg_.log_file, std::ios::out);
     }
 }
 
+void Trainer::build_hidden_cache() {
+    std::cout << "\n=== Building Hidden State Cache ===" << std::endl;
+    hidden_cache_.build(model_, train_loader_);
+    std::cout << "Cache ready: " << hidden_cache_.num_batches() << " batches, "
+              << (hidden_cache_.num_batches() * hidden_cache_.batch_size() *
+                  hidden_cache_.seq_len()) << " positions cached"
+              << std::endl;
+}
+
 void Trainer::train() {
-    // Dynamically calculate total steps
-    Index batches_per_epoch = train_loader_.batches_per_epoch();
-    Index total_batches = batches_per_epoch * cfg_.num_epochs;
+    // Build cache
+    if (hidden_cache_.num_batches() == 0) {
+        build_hidden_cache();
+    }
+
+    if (model_.gpu_ctx()) {
+        train_with_cache();
+    } else {
+        // Old CPU path (no cache, no GPU)
+        Index batches_per_epoch = train_loader_.batches_per_epoch();
+        Index total_batches = batches_per_epoch * cfg_.num_epochs;
+        if (cfg_.max_steps > 0 && cfg_.max_steps < total_batches)
+            total_batches = cfg_.max_steps;
+        Index batch_size = train_loader_.batch_size();
+        Index seq_len = train_loader_.seq_len();
+        Index tok_per_step = batch_size * seq_len;
+        Real total_tokens = Real(total_batches) * tok_per_step;
+
+        std::cout << "\n=== Training (CPU) Started ===" << "\n"
+                  << "  Run: " << cfg_.run_name << "\n"
+                  << "  Tokens/step: " << tok_per_step << "\n"
+                  << "  Total steps: " << total_batches << "\n"
+                  << "  Total tokens: " << std::llround(total_tokens) << "\n"
+                  << "  Learning rate: " << cfg_.lr << "\n"
+                  << std::endl;
+
+        Index global_step = 0;
+        Index tokens_processed = 0;
+        auto start_time = std::time(nullptr);
+
+        for (Index epoch = 0; epoch < cfg_.num_epochs; ++epoch) {
+            train_loader_.reset();
+            while (!train_loader_.epoch_done()) {
+                Batch batch = train_loader_.next();
+                if (batch.tokens.empty()) break;
+
+                TrainingMetrics metrics = model_.forward(batch.tokens, batch.targets);
+
+                model_.zero_gradients();
+                model_.compute_gradients(batch.targets);
+
+                Real grad_norm = 0;
+                for (auto& g : model_.grad_W_out_) grad_norm += g * g;
+                for (auto& g : model_.grad_b_out_) grad_norm += g * g;
+                grad_norm = std::sqrt(grad_norm);
+
+                if (grad_norm > cfg_.grad_clip) {
+                    Real scale = cfg_.grad_clip / (grad_norm + EPS);
+                    for (auto& g : model_.grad_W_out_) g *= scale;
+                    for (auto& g : model_.grad_b_out_) g *= scale;
+                }
+
+                optimizer_.set_lr(get_lr(global_step));
+                optimizer_.step();
+                model_.sync_params_to_ssog();
+
+                tokens_processed += batch.batch_size * batch.seq_len;
+                global_step++;
+
+                if (global_step % cfg_.log_interval == 0) {
+                    auto now = std::time(nullptr);
+                    Real elapsed = std::difftime(now, start_time);
+                    std::cout << "  [Step " << global_step << "/" << total_batches << "]"
+                              << " loss=" << std::fixed << std::setprecision(4) << metrics.loss
+                              << " ppl=" << std::setprecision(4) << metrics.perplexity
+                              << " elapsed=" << elapsed << "s"
+                              << std::endl;
+                }
+            }
+        }
+    }
+}
+
+TrainingMetrics Trainer::train_with_cache() {
+    Index n_batches = hidden_cache_.num_batches();
+    Index batch_size = hidden_cache_.batch_size();
+    Index seq_len = hidden_cache_.seq_len();
+    Index tok_per_step = batch_size * seq_len;
+    Index total_batches = n_batches * cfg_.num_epochs;
     if (cfg_.max_steps > 0 && cfg_.max_steps < total_batches)
         total_batches = cfg_.max_steps;
-    Index batch_size = train_loader_.batch_size();
-    Index seq_len = train_loader_.seq_len();
-    Index tok_per_step = batch_size * seq_len;
     Real total_tokens = Real(total_batches) * tok_per_step;
 
-    std::cout << "\n=== Training Started ===" << "\n"
+    std::cout << "\n=== Training (GPU + Cache) Started ===" << "\n"
               << "  Run: " << cfg_.run_name << "\n"
-              << "  Epochs: " << cfg_.num_epochs << "\n"
+              << "  Batches cached: " << n_batches << "\n"
               << "  Batch size: " << batch_size << "  Seq len: " << seq_len << "\n"
               << "  Tokens/step: " << tok_per_step << "\n"
-              << "  Steps/epoch: " << batches_per_epoch << "\n"
               << "  Total steps: " << total_batches << "\n"
               << "  Total tokens: " << std::llround(total_tokens) << "\n"
               << "  Learning rate: " << cfg_.lr << "\n"
@@ -47,7 +127,7 @@ void Trainer::train() {
               << "  Checkpoint dir: " << cfg_.checkpoint_dir << "\n"
               << std::endl;
 
-    log("=== Training Started ===");
+    log("=== Training (GPU + Cache) Started ===");
     log("  Run: " + cfg_.run_name + "  Steps: " + std::to_string(total_batches) +
         "  Tokens: " + std::to_string(std::llround(total_tokens)));
 
@@ -58,24 +138,26 @@ void Trainer::train() {
     auto start_time = std::time(nullptr);
 
     for (Index epoch = 0; epoch < cfg_.num_epochs; ++epoch) {
-        train_loader_.reset();
-        Index epoch_step = 0;
-
         std::cout << "--- Epoch " << (epoch + 1) << "/" << cfg_.num_epochs << " ---" << std::endl;
         log("--- Epoch " + std::to_string(epoch + 1) + "/" + std::to_string(cfg_.num_epochs) + " ---");
 
-        while (!train_loader_.epoch_done()) {
-            Batch batch = train_loader_.next();
-            if (batch.tokens.empty()) break;
-
+        for (Index bi = 0; bi < n_batches; ++bi) {
             auto batch_start = std::time(nullptr);
 
-            // Forward
-            TrainingMetrics metrics = model_.forward(batch.tokens, batch.targets);
+            // Get cached data
+            const float* hidden = hidden_cache_.get_hidden_batch(bi);
+            const int* expert_idxs = nullptr;
+            const float* expert_wgts = nullptr;
+            hidden_cache_.get_routing_batch(bi, expert_idxs, expert_wgts);
+            const Mat& targets = hidden_cache_.get_targets(bi);
 
-            // Backward
-            model_.zero_gradients();
-            model_.compute_gradients(batch.targets);
+            if (!hidden || !expert_idxs || !expert_wgts) break;
+
+            Index n_positions = batch_size * seq_len;
+
+            // GPU forward + backward
+            Real loss = model_.gpu_forward_backward(hidden, expert_idxs, expert_wgts,
+                                                     targets, n_positions);
 
             // Gradient norm
             Real grad_norm = 0;
@@ -95,20 +177,24 @@ void Trainer::train() {
             optimizer_.step();
             model_.sync_params_to_ssog();
 
-            // Update counters
-            tokens_processed += batch.batch_size * batch.seq_len;
+            tokens_processed += tok_per_step;
             global_step++;
-            epoch_step++;
 
-            // Log every interval
-            if (global_step % cfg_.log_interval == 1 || epoch_step == 1) {
+            // Metrics from loss (no accuracy with GPU yet)
+            TrainingMetrics metrics;
+            metrics.loss = loss / n_positions;
+            metrics.perplexity = std::exp(metrics.loss);
+            metrics.accuracy = 0; // not computed on GPU yet
+
+            // Log
+            if (global_step % cfg_.log_interval == 0 || (bi == 0 && epoch == 0)) {
                 auto now = std::time(nullptr);
                 Real elapsed = std::difftime(now, start_time);
                 Real step_time = std::difftime(now, batch_start);
                 Real tok_per_sec = tok_per_step / std::max(step_time, 1.0);
                 Real eta = (total_batches - global_step) * step_time;
                 Real lr_now = optimizer_.lr();
-                Real epoch_progress = 100.0 * Real(epoch_step) / batches_per_epoch;
+                Real epoch_progress = 100.0 * Real(bi) / n_batches;
 
                 log_metrics(global_step, metrics, {
                     {"lr", lr_now},
@@ -118,7 +204,7 @@ void Trainer::train() {
                     {"eta_s", eta},
                     {"elapsed_s", elapsed},
                     {"total", Real(total_batches)},
-                    {"epoch_step", Real(epoch_step)},
+                    {"epoch_step", Real(bi)},
                     {"epoch", Real(epoch + 1)}
                 });
             }
@@ -148,18 +234,9 @@ void Trainer::train() {
             if (cfg_.max_steps > 0 && global_step >= cfg_.max_steps) break;
         }
 
-        // Epoch summary
-        TrainingMetrics epoch_metrics = metrics_.empty() ? TrainingMetrics{} : metrics_.back();
         auto now = std::time(nullptr);
         Real elapsed = std::difftime(now, start_time);
-        std::ostringstream ss;
-        ss << "  [Epoch " << (epoch + 1) << "] done."
-           << " loss=" << std::fixed << std::setprecision(4) << epoch_metrics.loss
-           << " ppl=" << std::setprecision(4) << epoch_metrics.perplexity
-           << " acc=" << std::setprecision(2) << (epoch_metrics.accuracy * 100) << "%"
-           << " elapsed=" << elapsed << "s";
-        std::cout << ss.str() << std::endl;
-        log(ss.str());
+        std::cout << "  [Epoch " << (epoch + 1) << "] done. elapsed=" << elapsed << "s" << std::endl;
 
         if (cfg_.max_steps > 0 && global_step >= cfg_.max_steps) break;
     }
@@ -188,10 +265,8 @@ void Trainer::train() {
     std::string final_path = cfg_.checkpoint_dir + "/" + cfg_.run_name + "_final.bin";
     save_checkpoint(final_path);
     std::cout << "  Final checkpoint: " << final_path << std::endl;
-}
 
-void Trainer::train_step(const Batch& batch) {
-    (void)batch;
+    return TrainingMetrics{};
 }
 
 TrainingMetrics Trainer::evaluate() {
@@ -239,7 +314,6 @@ void Trainer::log_metrics(Index step, const TrainingMetrics& metrics,
     Real elapsed_s = get("elapsed_s", 0);
     Real epoch = get("epoch", 1);
 
-    // Format ETA
     std::string eta_str;
     if (eta_s > 3600) {
         eta_str = std::to_string(int(eta_s / 3600)) + "h"
@@ -257,14 +331,12 @@ void Trainer::log_metrics(Index step, const TrainingMetrics& metrics,
               << " loss=" << std::setprecision(4) << metrics.loss
               << " ppl=" << std::setprecision(4) << metrics.perplexity
               << " acc=" << std::setprecision(2) << (metrics.accuracy * 100) << "%"
-              << " conf=" << std::setprecision(2) << metrics.sheaf_conflict
               << " lr=" << std::scientific << std::setprecision(2) << lr_now
               << " |g|=" << std::fixed << std::setprecision(2) << grad_norm
               << " " << std::llround(tok_per_sec) << "tok/s"
               << " eta=" << eta_str
               << std::endl;
 
-    // Log to file (CSV format)
     if (log_stream_.is_open()) {
         log_stream_ << step << ","
                     << int(epoch) << ","
@@ -272,7 +344,7 @@ void Trainer::log_metrics(Index step, const TrainingMetrics& metrics,
                     << metrics.loss << ","
                     << metrics.perplexity << ","
                     << metrics.accuracy << ","
-                    << metrics.sheaf_conflict << ","
+                    << (metrics.sheaf_conflict) << ","
                     << lr_now << ","
                     << grad_norm << ","
                     << tok_per_sec << ","
@@ -293,7 +365,7 @@ Real Trainer::get_lr(Index step) const {
     if (step < warmup) {
         lr = cfg_.lr * (Real(step) / warmup);
     } else {
-        Index total = train_loader_.batches_per_epoch() * cfg_.num_epochs;
+        Index total = hidden_cache_.num_batches() * cfg_.num_epochs;
         if (cfg_.max_steps > 0) total = cfg_.max_steps;
         Real progress = Real(step - warmup) / (total - warmup + 1);
         if (total > warmup) {
