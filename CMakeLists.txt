@@ -15,7 +15,7 @@ add_library(ai2_core STATIC
     src/ssog.cpp
 )
 
-add_library(ai2_train STATIC
+add_library(ai2_train_lib STATIC
     src/tokenizer.cpp
     src/dataloader.cpp
     src/model.cpp
@@ -30,7 +30,6 @@ foreach(COMPONENT slie lssc stre uq ataa ssog)
 endforeach()
 
 add_executable(ai2_train src/main_train.cpp)
-target_link_libraries(ai2_train ai2_core ai2_train)
-target_link_libraries(ai2_train stdc++fs)
+target_link_libraries(ai2_train ai2_core ai2_train_lib)
 
 enable_testing()
