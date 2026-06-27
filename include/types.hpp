@@ -11,6 +11,9 @@
 #include <limits>
 #include <memory>
 #include <functional>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 namespace ai2 {
 
@@ -32,6 +35,7 @@ inline Vec softmax(const Vec& x) {
     Vec y(x.size());
     Real m = *std::max_element(x.begin(), x.end());
     Real s = 0;
+    #pragma omp parallel for reduction(+:s)
     for (Index i = 0; i < x.size(); ++i) {
         y[i] = std::exp(x[i] - m);
         s += y[i];
@@ -65,6 +69,7 @@ inline Vec mat_vec(const Mat& A, const Vec& x) {
     Index m = A.size();
     assert(m > 0 && A[0].size() == x.size());
     Vec y(m, 0);
+    #pragma omp parallel for
     for (Index i = 0; i < m; ++i)
         for (Index j = 0; j < x.size(); ++j)
             y[i] += A[i][j] * x[j];
@@ -75,6 +80,7 @@ inline Mat mat_mul(const Mat& A, const Mat& B) {
     Index m = A.size(), n = A[0].size(), p = B[0].size();
     assert(n == B.size());
     Mat C(m, Vec(p, 0));
+    #pragma omp parallel for
     for (Index i = 0; i < m; ++i)
         for (Index k = 0; k < n; ++k)
             for (Index j = 0; j < p; ++j)

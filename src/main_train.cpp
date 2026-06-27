@@ -10,6 +10,10 @@
 using namespace ai2;
 
 int main(int /*argc*/, char** /*argv*/) {
+    #ifdef _OPENMP
+    omp_set_num_threads(omp_get_num_procs());
+    std::cout << "OpenMP enabled: " << omp_get_num_procs() << " threads" << std::endl;
+    #endif
     std::cout << "=== Alien Intelligence (AI²) Training ===" << std::endl;
 
     // Configuration
@@ -43,22 +47,22 @@ int main(int /*argc*/, char** /*argv*/) {
         tokenizer.save(data_dir + "/tokenizer.vocab");
     }
 
-    // Create data loaders
-    DataLoader train_loader(pretrain_file, tokenizer, 8, 64);
-    DataLoader eval_loader(pretrain_file, tokenizer, 4, 64);
+    // Create data loaders (large batch for CPU parallelism)
+    DataLoader train_loader(pretrain_file, tokenizer, 64, 128);
+    DataLoader eval_loader(pretrain_file, tokenizer, 32, 128);
 
-    // Initialize model
+    // Initialize model (bigger model = better CPU utilization)
     ModelConfig cfg;
     cfg.vocab_size = tokenizer.vocab_size();
-    cfg.d_model = 64;
-    cfg.d_state = 32;
-    cfg.n_rf = 64;
-    cfg.d_node = 32;
-    cfg.n_experts = 16;
+    cfg.d_model = 256;
+    cfg.d_state = 128;
+    cfg.n_rf = 256;
+    cfg.d_node = 128;
+    cfg.n_experts = 32;
     cfg.k_experts = 4;
     cfg.n_ensemble = 3;
-    cfg.m_buckets = 4096;
-    cfg.sketch_width = 512;
+    cfg.m_buckets = 16384;
+    cfg.sketch_width = 2048;
 
     Model model(cfg);
     std::cout << "Model created." << std::endl;
@@ -72,9 +76,9 @@ int main(int /*argc*/, char** /*argv*/) {
     {
         TrainConfig train_cfg;
         train_cfg.num_epochs = 3;
-        train_cfg.log_interval = 5;
-        train_cfg.eval_interval = 20;
-        train_cfg.save_interval = 100;
+        train_cfg.log_interval = 50;
+        train_cfg.eval_interval = 200;
+        train_cfg.save_interval = 500;
         train_cfg.lr = 0.001;
         train_cfg.run_name = "ai2_pretrain";
         train_cfg.checkpoint_dir = "checkpoints";
@@ -89,20 +93,20 @@ int main(int /*argc*/, char** /*argv*/) {
     {
         std::ifstream f(finetune_file);
         if (f.good()) {
-            DataLoader ft_loader(finetune_file, tokenizer, 4, 128);
-            DataLoader ft_eval(finetune_file, tokenizer, 2, 128);
+        DataLoader ft_loader(finetune_file, tokenizer, 32, 256);
+        DataLoader ft_eval(finetune_file, tokenizer, 16, 256);
 
             ModelConfig ft_cfg = cfg;
-            ft_cfg.d_model = 64;
-            ft_cfg.r_lora = 4;
+            ft_cfg.d_model = 256;
+            ft_cfg.r_lora = 8;
 
             Model ft_model(ft_cfg);
 
             TrainConfig ft_train_cfg;
             ft_train_cfg.num_epochs = 2;
-            ft_train_cfg.log_interval = 5;
-            ft_train_cfg.eval_interval = 10;
-            ft_train_cfg.save_interval = 50;
+            ft_train_cfg.log_interval = 20;
+            ft_train_cfg.eval_interval = 50;
+            ft_train_cfg.save_interval = 200;
             ft_train_cfg.lr = 0.0005;
             ft_train_cfg.run_name = "ai2_finetune";
             ft_train_cfg.checkpoint_dir = "checkpoints";
