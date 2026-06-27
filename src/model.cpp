@@ -163,19 +163,21 @@ void Model::compute_gradients(const Mat& targets) {
     }
 }
 
-Real Model::gpu_forward_backward(const float* hidden_flat,
+Real Model::gpu_forward_backward(const float* mixture_flat,
+                                  const float* hidden_flat,
                                   const int* expert_idxs_flat,
                                   const float* expert_wgts_flat,
                                   const Mat& targets,
                                   Index n_positions)
 {
+    (void)expert_idxs_flat;
+    (void)expert_wgts_flat;
     if (!gpu_ctx_ || n_positions == 0) return 0.0f;
 
     Index d_model = cfg_.d_model;
-    Index k = cfg_.k_experts;
     Index n_vocab = cfg_.vocab_size;
 
-    // Filter out padding positions (target == 0 or out of range)
+    // Filter out padding positions
     std::vector<int> valid_idx;
     valid_idx.reserve(n_positions);
     Index batch_size = targets.size();
@@ -192,29 +194,25 @@ Real Model::gpu_forward_backward(const float* hidden_flat,
     Index v = valid_idx.size();
     if (v == 0) return 0.0f;
 
-    // Build compacted arrays
+    // Build compacted arrays (mixture + hidden + targets)
+    std::vector<float> compact_mixture(v * d_model);
     std::vector<float> compact_hidden(v * d_model);
-    std::vector<int> compact_idxs(v * k);
-    std::vector<float> compact_wgts(v * k);
     std::vector<int> compact_targets(v);
 
     for (Index i = 0; i < v; ++i) {
         Index src = valid_idx[i];
         compact_targets[i] = static_cast<int>(targets[src / seq_len][src % seq_len]);
-        for (Index j = 0; j < d_model; ++j)
+        for (Index j = 0; j < d_model; ++j) {
+            compact_mixture[i * d_model + j] = mixture_flat[src * d_model + j];
             compact_hidden[i * d_model + j] = hidden_flat[src * d_model + j];
-        for (Index kk = 0; kk < k; ++kk) {
-            compact_idxs[i * k + kk] = expert_idxs_flat[src * k + kk];
-            compact_wgts[i * k + kk] = expert_wgts_flat[src * k + kk];
         }
     }
 
-    // GPU forward + backward
+    // GPU forward (mixture → output proj) + backward (hidden → gradient)
     zero_gradients();
     float total_loss = gpu::forward_backward(gpu_ctx_,
+                                              compact_mixture.data(),
                                               compact_hidden.data(),
-                                              compact_idxs.data(),
-                                              compact_wgts.data(),
                                               compact_targets.data(),
                                               static_cast<int>(v),
                                               grad_W_out_, grad_b_out_,

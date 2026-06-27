@@ -146,17 +146,19 @@ TrainingMetrics Trainer::train_with_cache() {
 
             // Get cached data
             const float* hidden = hidden_cache_.get_hidden_batch(bi);
+            const float* mixture = hidden_cache_.get_mixture_batch(bi);
             const int* expert_idxs = nullptr;
             const float* expert_wgts = nullptr;
             hidden_cache_.get_routing_batch(bi, expert_idxs, expert_wgts);
             const Mat& targets = hidden_cache_.get_targets(bi);
 
-            if (!hidden || !expert_idxs || !expert_wgts) break;
+            if (!hidden || !mixture || !expert_idxs || !expert_wgts) break;
 
             Index n_positions = batch_size * seq_len;
 
-            // GPU forward + backward
-            Real loss = model_.gpu_forward_backward(hidden, expert_idxs, expert_wgts,
+            // GPU forward (mixture) + backward (hidden for gradient)
+            Real loss = model_.gpu_forward_backward(mixture, hidden,
+                                                     expert_idxs, expert_wgts,
                                                      targets, n_positions);
 
             // Gradient norm

@@ -56,13 +56,13 @@ public:
     // Compute gradients for output layer from last forward pass
     void compute_gradients(const Mat& targets);
 
-    // GPU-accelerated forward+backward using pre-computed hidden states + routing
-    // hidden_flat: [n_positions * d_model] floats
-    // expert_idxs_flat: [n_positions * k_experts] ints
-    // expert_wgts_flat: [n_positions * k_experts] floats
+    // GPU-accelerated forward+backward using pre-computed mixture + hidden
+    // mixture_flat: [n_positions * d_model] floats — pre-computed expert weighted sum
+    // hidden_flat:  [n_positions * d_model] floats — raw hidden (for gradient)
     // targets: [batch_size x seq_len] token IDs
     // Returns loss
-    Real gpu_forward_backward(const float* hidden_flat,
+    Real gpu_forward_backward(const float* mixture_flat,
+                              const float* hidden_flat,
                               const int* expert_idxs_flat,
                               const float* expert_wgts_flat,
                               const Mat& targets,
