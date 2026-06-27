@@ -114,8 +114,11 @@ Vec SLIE::forward(Index token_id, const Vec& prev_pos) {
     // Layer 1B: Streaming positional encoding
     Vec pos = spe_forward(prev_pos, emb);
 
-    // Combine embedding + position + sketch
-    Vec combined = elem_add(emb, pos);
+    // Combine embedding + position (pos is d_pos-dim, emb is d_model-dim)
+    Vec combined = emb;
+    for (Index i = 0; i < std::min(pos.size(), emb.size()); ++i) {
+        combined[i] += pos[i];
+    }
 
     // Layer 1C: Update sketch and add sketch features
     sketch_update(token_id);
