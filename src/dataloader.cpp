@@ -45,8 +45,8 @@ Batch DataLoader::next() {
     Index batch_size = batch_size_;
     Index seq_len = seq_len_;
 
-    Mat tokens(batch_size, Vec(seq_len, pad_id()));
-    Mat targets(batch_size, Vec(seq_len, pad_id()));
+    Mat tokens(batch_size, Vec(seq_len, tokenizer_->pad_id()));
+    Mat targets(batch_size, Vec(seq_len, tokenizer_->pad_id()));
 
     for (Index b = 0; b < batch_size; ++b) {
         for (Index t = 0; t < seq_len; ++t) {
@@ -58,7 +58,7 @@ Batch DataLoader::next() {
             if (pos_ + t + 1 < data_.size()) {
                 targets[b][t] = data_[pos_ + t + 1];
             } else {
-                targets[b][t] = eos_id();
+                targets[b][t] = tokenizer_->eos_id();
                 done_ = true;
             }
         }
