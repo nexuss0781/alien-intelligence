@@ -4,7 +4,7 @@
 -- Check for working CXX compiler: /usr/bin/c++ - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Configuring done (0.5s)
+-- Configuring done (0.2s)
 -- Generating done (0.0s)
 -- Build files have been written to: /content/alien-intelligence/build
 [  3%] Building CXX object CMakeFiles/ai2_core.dir/src/slie.cpp.o
@@ -15,26 +15,26 @@
 [ 20%] Building CXX object CMakeFiles/ai2_core.dir/src/ssog.cpp.o
 [ 24%] Linking CXX static library libai2_core.a
 [ 24%] Built target ai2_core
+[ 27%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/tokenizer.cpp.o
 [ 31%] Building CXX object CMakeFiles/test_slie.dir/tests/test_slie.cpp.o
-[ 31%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/tokenizer.cpp.o
 [ 34%] Linking CXX executable test_slie
 [ 34%] Built target test_slie
-[ 37%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/dataloader.cpp.o
-[ 41%] Building CXX object CMakeFiles/test_lssc.dir/tests/test_lssc.cpp.o
+[ 37%] Building CXX object CMakeFiles/test_lssc.dir/tests/test_lssc.cpp.o
+[ 41%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/dataloader.cpp.o
 [ 44%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/model.cpp.o
 [ 48%] Linking CXX executable test_lssc
 [ 48%] Built target test_lssc
-[ 51%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/optimizer.cpp.o
-[ 55%] Building CXX object CMakeFiles/test_stre.dir/tests/test_stre.cpp.o
-[ 58%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/trainer.cpp.o
-[ 62%] Linking CXX executable test_stre
-[ 62%] Built target test_stre
+[ 51%] Building CXX object CMakeFiles/test_stre.dir/tests/test_stre.cpp.o
+[ 55%] Linking CXX executable test_stre
+[ 55%] Built target test_stre
+[ 58%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/optimizer.cpp.o
+[ 62%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/trainer.cpp.o
 [ 65%] Building CXX object CMakeFiles/test_uq.dir/tests/test_uq.cpp.o
-[ 68%] Linking CXX static library libai2_train_lib.a
-[ 68%] Built target ai2_train_lib
+[ 68%] Linking CXX executable test_uq
+[ 68%] Built target test_uq
 [ 72%] Building CXX object CMakeFiles/test_ataa.dir/tests/test_ataa.cpp.o
-[ 75%] Linking CXX executable test_uq
-[ 75%] Built target test_uq
+[ 75%] Linking CXX static library libai2_train_lib.a
+[ 75%] Built target ai2_train_lib
 [ 79%] Building CXX object CMakeFiles/test_ssog.dir/tests/test_ssog.cpp.o
 [ 82%] Linking CXX executable test_ataa
 [ 82%] Built target test_ataa
@@ -94,6 +94,10 @@
   CHE gives different embeddings for different tokens... PASS
   SPE updates positional state... PASS
   SPE gives different states for different positions... PASS
+  Sketch updates counters... PASS
+  reset_position resets state... PASS
+  O(1) per token — embedding dimension independent... PASS
+  Handles OOB vocabulary indices gracefully... PASS
 test_slie: /content/alien-intelligence/include/types.hpp:66: ai2::Vec ai2::mat_vec(const Mat&, const Vec&): Assertion `m > 0 && A[0].size() == x.size()' failed.
-run.txt: line 1:  1238 Aborted                 (core dumped) ./build/test_slie
+run.txt: line 1:  3378 Aborted                 (core dumped) ./build/test_slie
 

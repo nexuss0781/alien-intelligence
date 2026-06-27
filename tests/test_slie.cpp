@@ -143,7 +143,7 @@ void test_numerical_stability() {
             CHECK(!std::isnan(v));
             CHECK(!std::isinf(v));
         }
-        prev = out;
+        prev = slie.last_position();
     }
     END_TEST("No NaN or Inf in outputs");
 }
