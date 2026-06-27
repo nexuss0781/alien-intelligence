@@ -71,6 +71,10 @@ public:
     Index k_experts() const { return k_experts_; }
     Index n_vocab() const { return n_vocab_; }
 
+    // Accessors for expert weights (needed for GPU offload)
+    const std::vector<Mat>& expert_weights() const { return expert_weights_; }
+    const std::vector<Vec>& expert_biases() const { return expert_biases_; }
+
     // Mutable references for gradient-based training
     Mat& W_out() { return W_out_; }
     Vec& b_out() { return b_out_; }

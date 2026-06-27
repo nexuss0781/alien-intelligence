@@ -1,57 +1,158 @@
 === Alien Intelligence (AI²) Training ===
 [1/3] Downloading datasets (if needed)...
   Data already exists, skipping download
-[2/3] Building...
--- Found OpenMP_CXX: -fopenmp (found version "4.5")
--- Found OpenMP: TRUE (found version "4.5")
--- Configuring done (0.2s)
+[2/3] Building with CUDA...
+-- Configuring done (0.0s)
 -- Generating done (0.0s)
 -- Build files have been written to: /content/alien-intelligence/build
-[  6%] Building CXX object CMakeFiles/ai2_core.dir/src/slie.cpp.o
-[ 13%] Building CXX object CMakeFiles/ai2_core.dir/src/lssc.cpp.o
-[ 20%] Building CXX object CMakeFiles/ai2_core.dir/src/stre.cpp.o
-[ 26%] Building CXX object CMakeFiles/ai2_core.dir/src/uq.cpp.o
-[ 33%] Building CXX object CMakeFiles/ai2_core.dir/src/ataa.cpp.o
-[ 40%] Building CXX object CMakeFiles/ai2_core.dir/src/ssog.cpp.o
-[ 46%] Linking CXX static library libai2_core.a
-[ 46%] Built target ai2_core
-[ 60%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/dataloader.cpp.o
-[ 60%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/tokenizer.cpp.o
+[  5%] Building CUDA object CMakeFiles/ai2_gpu.dir/src/gpu_backend.cu.o
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+[ 11%] Building CXX object CMakeFiles/ai2_core.dir/src/slie.cpp.o
+In file included from /content/alien-intelligence/include/slie.hpp:2,
+                 from /content/alien-intelligence/src/slie.cpp:1:
+/content/alien-intelligence/include/types.hpp:38: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   38 |     #pragma omp parallel for reduction(+:s)
+      | 
+/content/alien-intelligence/include/types.hpp:72: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   72 |     #pragma omp parallel for
+      | 
+/content/alien-intelligence/include/types.hpp:83: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   83 |     #pragma omp parallel for
+      | 
+[ 16%] Building CXX object CMakeFiles/ai2_core.dir/src/lssc.cpp.o
+In file included from /content/alien-intelligence/include/lssc.hpp:2,
+                 from /content/alien-intelligence/src/lssc.cpp:1:
+/content/alien-intelligence/include/types.hpp:38: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   38 |     #pragma omp parallel for reduction(+:s)
+      | 
+/content/alien-intelligence/include/types.hpp:72: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   72 |     #pragma omp parallel for
+      | 
+/content/alien-intelligence/include/types.hpp:83: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   83 |     #pragma omp parallel for
+      | 
+[ 22%] Building CXX object CMakeFiles/ai2_core.dir/src/stre.cpp.o
+In file included from /content/alien-intelligence/include/stre.hpp:2,
+                 from /content/alien-intelligence/src/stre.cpp:1:
+/content/alien-intelligence/include/types.hpp:38: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   38 |     #pragma omp parallel for reduction(+:s)
+      | 
+/content/alien-intelligence/include/types.hpp:72: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   72 |     #pragma omp parallel for
+      | 
+/content/alien-intelligence/include/types.hpp:83: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   83 |     #pragma omp parallel for
+      | 
+[ 27%] Linking CUDA static library libai2_gpu.a
+[ 27%] Built target ai2_gpu
+[ 33%] Building CXX object CMakeFiles/ai2_core.dir/src/uq.cpp.o
+In file included from /content/alien-intelligence/include/uq.hpp:2,
+                 from /content/alien-intelligence/src/uq.cpp:1:
+/content/alien-intelligence/include/types.hpp:38: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   38 |     #pragma omp parallel for reduction(+:s)
+      | 
+/content/alien-intelligence/include/types.hpp:72: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   72 |     #pragma omp parallel for
+      | 
+/content/alien-intelligence/include/types.hpp:83: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   83 |     #pragma omp parallel for
+      | 
+[ 38%] Building CXX object CMakeFiles/ai2_core.dir/src/ataa.cpp.o
+In file included from /content/alien-intelligence/include/ataa.hpp:2,
+                 from /content/alien-intelligence/src/ataa.cpp:1:
+/content/alien-intelligence/include/types.hpp:38: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   38 |     #pragma omp parallel for reduction(+:s)
+      | 
+/content/alien-intelligence/include/types.hpp:72: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   72 |     #pragma omp parallel for
+      | 
+/content/alien-intelligence/include/types.hpp:83: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   83 |     #pragma omp parallel for
+      | 
+[ 44%] Building CXX object CMakeFiles/ai2_core.dir/src/ssog.cpp.o
+In file included from /content/alien-intelligence/include/ssog.hpp:2,
+                 from /content/alien-intelligence/src/ssog.cpp:1:
+/content/alien-intelligence/include/types.hpp:38: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   38 |     #pragma omp parallel for reduction(+:s)
+      | 
+/content/alien-intelligence/include/types.hpp:72: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   72 |     #pragma omp parallel for
+      | 
+/content/alien-intelligence/include/types.hpp:83: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   83 |     #pragma omp parallel for
+      | 
+[ 50%] Linking CXX static library libai2_core.a
+[ 50%] Built target ai2_core
+[ 55%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/tokenizer.cpp.o
+[ 61%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/dataloader.cpp.o
+In file included from /content/alien-intelligence/include/tokenizer.hpp:2,
+                 from /content/alien-intelligence/src/tokenizer.cpp:1:
+/content/alien-intelligence/include/types.hpp:38: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   38 |     #pragma omp parallel for reduction(+:s)
+      | 
+In file included from /content/alien-intelligence/include/dataloader.hpp:2,
+                 from /content/alien-intelligence/src/dataloader.cpp:1:
+/content/alien-intelligence/include/types.hpp:38: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   38 |     #pragma omp parallel for reduction(+:s)
+      | 
+/content/alien-intelligence/include/types.hpp:72: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   72 |     #pragma omp parallel for
+      | 
+/content/alien-intelligence/include/types.hpp:72: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   72 |     #pragma omp parallel for
+      | 
+/content/alien-intelligence/include/types.hpp:83: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   83 |     #pragma omp parallel for
+      | 
+/content/alien-intelligence/include/types.hpp:83: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   83 |     #pragma omp parallel for
+      | 
 [ 66%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/model.cpp.o
-[ 73%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/optimizer.cpp.o
-[ 80%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/trainer.cpp.o
-[ 86%] Linking CXX static library libai2_train_lib.a
-[ 86%] Built target ai2_train_lib
-[ 93%] Building CXX object CMakeFiles/ai2_train.dir/src/main_train.cpp.o
-[100%] Linking CXX executable ai2_train
-[100%] Built target ai2_train
-[3/3] Starting training (OMP_NUM_THREADS=2) ...
-OpenMP enabled: 2 threads
-=== Alien Intelligence (AI²) Training ===
-
---- Stage 1: Pretraining ---
-Tokenizer vocab size: 132
-  Loaded 1303653 tokens from data/pretrain.txt
-  Vocab size: 132
-  Batches per epoch: 159
-  Loaded 1303653 tokens from data/pretrain.txt
-  Vocab size: 132
-  Batches per epoch: 318
-Model created.
-  d_model=256 d_state=128 vocab=132 experts=32
-
-=== Training Started ===
-  Run: ai2_pretrain
-  Epochs: 3
-  Batch size: 64  Seq len: 128
-  Tokens/step: 8192
-  Steps/epoch: 159
-  Total steps: 477
-  Total tokens: 3907584
-  Learning rate: 0.001
-  Optimizer params: 33924
-  Checkpoint dir: checkpoints
-
---- Epoch 1/3 ---
-  [Step 1/477] ep=1/3 0.6% loss=4.8831 ppl=132.0353 acc=0.46% conf=1.38 lr=1.00e-04 |g|=2289.01 1365tok/s eta=47m36s
+In file included from /content/alien-intelligence/include/model.hpp:2,
+                 from /content/alien-intelligence/src/model.cpp:1:
+/content/alien-intelligence/include/types.hpp:38: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   38 |     #pragma omp parallel for reduction(+:s)
+      | 
+/content/alien-intelligence/include/types.hpp:72: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   72 |     #pragma omp parallel for
+      | 
+/content/alien-intelligence/include/types.hpp:83: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   83 |     #pragma omp parallel for
+      | 
+[ 72%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/optimizer.cpp.o
+In file included from /content/alien-intelligence/include/optimizer.hpp:2,
+                 from /content/alien-intelligence/src/optimizer.cpp:1:
+/content/alien-intelligence/include/types.hpp:38: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   38 |     #pragma omp parallel for reduction(+:s)
+      | 
+/content/alien-intelligence/include/types.hpp:72: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   72 |     #pragma omp parallel for
+      | 
+/content/alien-intelligence/include/types.hpp:83: warning: ignoring ‘#pragma omp parallel’ [-Wunknown-pragmas]
+   83 |     #pragma omp parallel for
+      | 
+/content/alien-intelligence/src/model.cpp: In constructor ‘ai2::Model::Model(const ai2::ModelConfig&)’:
+/content/alien-intelligence/src/model.cpp:38:33: error: ‘std::vector<std::vector<std::vector<double> > > ai2::SSOG::expert_weights_’ is private within this context
+   38 |                          ssog_->expert_weights_, ssog_->expert_biases_,
+      |                                 ^~~~~~~~~~~~~~~
+In file included from /content/alien-intelligence/include/model.hpp:8,
+                 from /content/alien-intelligence/src/model.cpp:1:
+/content/alien-intelligence/include/ssog.hpp:91:22: note: declared private here
+   91 |     std::vector<Mat> expert_weights_;
+      |                      ^~~~~~~~~~~~~~~
+/content/alien-intelligence/src/model.cpp:38:57: error: ‘std::vector<std::vector<double> > ai2::SSOG::expert_biases_’ is private within this context
+   38 |                          ssog_->expert_weights_, ssog_->expert_biases_,
+      |                                                         ^~~~~~~~~~~~~~
+In file included from /content/alien-intelligence/include/model.hpp:8,
+                 from /content/alien-intelligence/src/model.cpp:1:
+/content/alien-intelligence/include/ssog.hpp:94:22: note: declared private here
+   94 |     std::vector<Vec> expert_biases_;
+      |                      ^~~~~~~~~~~~~~
+gmake[3]: *** [CMakeFiles/ai2_train_lib.dir/build.make:107: CMakeFiles/ai2_train_lib.dir/src/model.cpp.o] Error 1
+gmake[3]: *** Waiting for unfinished jobs....
+gmake[2]: *** [CMakeFiles/Makefile2:182: CMakeFiles/ai2_train_lib.dir/all] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:455: CMakeFiles/ai2_train.dir/rule] Error 2
+gmake: *** [Makefile:264: ai2_train] Error 2
+[3/3] Starting training (GPU) ...
+train.txt: line 21: ./build/ai2_train: No such file or directory
 

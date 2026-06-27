@@ -35,7 +35,7 @@ Model::Model(const ModelConfig& cfg) : cfg_(cfg) {
     sync_params_from_ssog();
 
     gpu_ctx_ = gpu::init(ssog_->W_out(), ssog_->b_out(),
-                         ssog_->expert_weights_, ssog_->expert_biases_,
+                         ssog_->expert_weights(), ssog_->expert_biases(),
                          64 * 128,
                          cfg.n_experts, cfg.k_experts);
     if (gpu_ctx_) {
