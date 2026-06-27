@@ -30,6 +30,6 @@ foreach(COMPONENT slie lssc stre uq ataa ssog)
 endforeach()
 
 add_executable(ai2_train src/main_train.cpp)
-target_link_libraries(ai2_train ai2_core ai2_train_lib)
+target_link_libraries(ai2_train ai2_train_lib ai2_core)
 
 enable_testing()

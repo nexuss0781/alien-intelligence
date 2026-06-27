@@ -2,43 +2,35 @@
 -- Configuring done (0.0s)
 -- Generating done (0.0s)
 -- Build files have been written to: /content/alien-intelligence/build
-[  3%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/optimizer.cpp.o
-[ 29%] Built target ai2_core
-[ 33%] Building CXX object CMakeFiles/ai2_train_lib.dir/src/trainer.cpp.o
-[ 40%] Built target test_slie
-[ 48%] Built target test_lssc
-[ 51%] Building CXX object CMakeFiles/test_stre.dir/tests/test_stre.cpp.o
-[ 55%] Linking CXX static library libai2_train_lib.a
-[ 66%] Built target ai2_train_lib
-[ 70%] Building CXX object CMakeFiles/test_uq.dir/tests/test_uq.cpp.o
-[ 74%] Linking CXX executable test_stre
-[ 74%] Built target test_stre
-[ 77%] Building CXX object CMakeFiles/test_ataa.dir/tests/test_ataa.cpp.o
-[ 81%] Linking CXX executable test_uq
-[ 81%] Built target test_uq
-[ 85%] Building CXX object CMakeFiles/test_ssog.dir/tests/test_ssog.cpp.o
-[ 88%] Linking CXX executable test_ataa
-[ 88%] Built target test_ataa
-[ 92%] Building CXX object CMakeFiles/ai2_train.dir/src/main_train.cpp.o
-[ 96%] Linking CXX executable test_ssog
-[ 96%] Built target test_ssog
-/content/alien-intelligence/src/main_train.cpp: In function ‘int main(int, char**)’:
-/content/alien-intelligence/src/main_train.cpp:20:38: error: variable ‘std::ifstream f’ has initializer but incomplete type
-   20 |         std::ifstream f(pretrain_file);
-      |                                      ^
-/content/alien-intelligence/src/main_train.cpp:33:38: error: variable ‘std::ifstream f’ has initializer but incomplete type
-   33 |         std::ifstream f(pretrain_file);
-      |                                      ^
-/content/alien-intelligence/src/main_train.cpp:88:38: error: variable ‘std::ifstream f’ has initializer but incomplete type
-   88 |         std::ifstream f(finetune_file);
-      |                                      ^
-/content/alien-intelligence/src/main_train.cpp:10:14: warning: unused parameter ‘argc’ [-Wunused-parameter]
-   10 | int main(int argc, char** argv) {
-      |          ~~~~^~~~
-/content/alien-intelligence/src/main_train.cpp:10:27: warning: unused parameter ‘argv’ [-Wunused-parameter]
-   10 | int main(int argc, char** argv) {
-      |                    ~~~~~~~^~~~
-gmake[2]: *** [CMakeFiles/ai2_train.dir/build.make:79: CMakeFiles/ai2_train.dir/src/main_train.cpp.o] Error 1
+[ 22%] Built target ai2_train_lib
+[ 48%] Built target ai2_core
+[ 55%] Built target test_slie
+[ 62%] Built target test_lssc
+[ 70%] Built target test_uq
+[ 77%] Built target test_ataa
+[ 85%] Built target test_stre
+[ 92%] Built target test_ssog
+[ 96%] Building CXX object CMakeFiles/ai2_train.dir/src/main_train.cpp.o
+[100%] Linking CXX executable ai2_train
+/usr/bin/ld: libai2_train_lib.a(model.cpp.o): in function `ai2::Model::Model(ai2::ModelConfig const&)':
+model.cpp:(.text+0x2ca): undefined reference to `ai2::SLIE::SLIE(unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long)'
+/usr/bin/ld: model.cpp:(.text+0x4b0): undefined reference to `ai2::LSSC::LSSC(unsigned long, unsigned long, unsigned long)'
+/usr/bin/ld: model.cpp:(.text+0x6d4): undefined reference to `ai2::STRE::STRE(unsigned long, unsigned long, unsigned long, unsigned long)'
+/usr/bin/ld: model.cpp:(.text+0xa71): undefined reference to `ai2::UQ::UQ(unsigned long, unsigned long, unsigned long, unsigned long)'
+/usr/bin/ld: model.cpp:(.text+0xb8f): undefined reference to `ai2::ATAA::ATAA(unsigned long, unsigned long, unsigned long, unsigned long, unsigned long)'
+/usr/bin/ld: model.cpp:(.text+0xe18): undefined reference to `ai2::SSOG::SSOG(unsigned long, unsigned long, unsigned long, unsigned long, unsigned long)'
+/usr/bin/ld: libai2_train_lib.a(model.cpp.o): in function `ai2::Model::forward(std::vector<std::vector<double, std::allocator<double> >, std::allocator<std::vector<double, std::allocator<double> > > > const&, std::vector<std::vector<double, std::allocator<double> >, std::allocator<std::vector<double, std::allocator<double> > > > const&)':
+model.cpp:(.text+0x1822): undefined reference to `ai2::SLIE::reset_position()'
+/usr/bin/ld: model.cpp:(.text+0x1897): undefined reference to `ai2::SLIE::forward(unsigned long, std::vector<double, std::allocator<double> > const&)'
+/usr/bin/ld: model.cpp:(.text+0x1b39): undefined reference to `ai2::LSSC::forward(std::vector<std::vector<double, std::allocator<double> >, std::allocator<std::vector<double, std::allocator<double> > > > const&)'
+/usr/bin/ld: model.cpp:(.text+0x1b68): undefined reference to `ai2::STRE::forward(std::vector<std::vector<double, std::allocator<double> >, std::allocator<std::vector<double, std::allocator<double> > > > const&, unsigned long)'
+/usr/bin/ld: model.cpp:(.text+0x1b8d): undefined reference to `ai2::STRE::compute_conflict(std::vector<std::vector<double, std::allocator<double> >, std::allocator<std::vector<double, std::allocator<double> > > > const&) const'
+/usr/bin/ld: model.cpp:(.text+0x1e19): undefined reference to `ai2::UQ::step(std::vector<double, std::allocator<double> > const&, double, double)'
+/usr/bin/ld: model.cpp:(.text+0x1f04): undefined reference to `ai2::SSOG::forward(std::vector<double, std::allocator<double> > const&, double, std::vector<unsigned long, std::allocator<unsigned long> > const&) const'
+/usr/bin/ld: libai2_train_lib.a(model.cpp.o): in function `ai2::Model::reset_state()':
+model.cpp:(.text+0x19c): undefined reference to `ai2::SLIE::reset_position()'
+collect2: error: ld returned 1 exit status
+gmake[2]: *** [CMakeFiles/ai2_train.dir/build.make:102: ai2_train] Error 1
 gmake[1]: *** [CMakeFiles/Makefile2:368: CMakeFiles/ai2_train.dir/all] Error 2
 gmake: *** [Makefile:101: all] Error 2
 
