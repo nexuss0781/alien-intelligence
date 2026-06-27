@@ -56,7 +56,6 @@ void Trainer::train() {
     Index global_step = 0;
     Index tokens_processed = 0;
     auto start_time = std::time(nullptr);
-    auto step_start = start_time;
 
     for (Index epoch = 0; epoch < cfg_.num_epochs; ++epoch) {
         train_loader_.reset();
@@ -232,7 +231,6 @@ void Trainer::log_metrics(Index step, const TrainingMetrics& metrics,
     };
 
     Real total = get("total", 1);
-    Real epoch_step = get("epoch_step", 1);
     Real epoch_progress = get("epoch_progress", 0);
     Real lr_now = get("lr", 0);
     Real grad_norm = get("grad_norm", 0);
