@@ -33,6 +33,7 @@ struct ModelConfig {
     Index d_task = 32;
     Index r_lora = 8;
     Index reservoir_size = 1000;
+    Index n_examples = 8;
     Index sketch_rank = 16;
     Index n_layers = 3;
     Index k_hashes = 4;
