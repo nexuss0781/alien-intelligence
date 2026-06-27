@@ -270,43 +270,16 @@ void test_stre_math() {
         Mat Z(10, Vec(32, 0.5));
         stre.build_graph(Z);
         Index n = stre.num_nodes();
-        Index total_edges = 0;
-        for (auto& node : stre.nodes()) total_edges += node.neighbors.size();
-        total_edges /= 2;
-        std::cout << "    [debug] n_nodes=" << n << " n_edges=" << total_edges << std::endl;
         std::vector<Vec> const_feats(n, Vec(d_node, 1.0));
         Mat lap = stre.sheaf_laplacian_all(const_feats);
+        // Use range-based loop (index-based loop had a consistent error)
         Real total = 0;
-        for (Index vi = 0; vi < n && vi < lap.size(); ++vi) {
-            for (Index j = 0; j < d_node && j < lap[vi].size(); ++j) {
-                total += std::abs(lap[vi][j]);
-                if (std::abs(lap[vi][j]) > 1e-10) {
-                    std::cout << "    [debug] lap[" << vi << "][" << j << "]="
-                              << lap[vi][j] << " (non-zero)" << std::endl;
-                }
-            }
-        }
-        // Debug: print what nodes_ looks like
-        std::cout << "    [debug] nodes_.size()=" << stre.nodes().size()
-                  << " restriction_maps_.size()=";
-        // Print restriction maps size if accessible; otherwise just the node info
-        for (Index vi = 0; vi < stre.nodes().size() && vi < 5; ++vi) {
-            std::cout << " node[" << vi << "].neighbors=" << stre.nodes()[vi].neighbors.size();
-        }
-        std::cout << std::endl;
-        // With identity restriction maps, L * 1 = 0 for any graph
-        // Direct debug: print lap contents
-        std::cout << "    [debug test] lap.size=" << lap.size();
-        if (!lap.empty()) {
-            std::cout << " lap[0].size=" << lap[0].size() << " lap[0][0]=" << lap[0][0];
-            // Check all elements
-            Real check = 0;
-            for (auto& row : lap) for (auto& v : row) check += std::abs(v);
-            std::cout << " check_total=" << check;
-        }
-        std::cout << std::endl;
+        for (auto& row : lap) for (auto& v : row) total += std::abs(v);
+        std::cout << "    [debug] n_nodes=" << n << " lap[0][0]="
+                  << (lap.empty() ? -1 : lap[0][0])
+                  << " total=" << total << std::endl;
         TEST_CLOSE(total, 0.0, 1e-10,
-                   "Sheaf Laplacian of constant vector should be near zero, got " + std::to_string(total));
+                   "Sheaf Laplacian of constant vector should be near zero");
     }
 
     // 3C. Conflict is non-negative
