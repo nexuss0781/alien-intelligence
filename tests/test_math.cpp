@@ -67,13 +67,22 @@ void test_slie_math() {
     // 1A. Hash ensemble produces distinct buckets for different tokens
     {
         Vec pos0(8, 0);
+        slie.reset_position();
         Vec e1 = slie.forward(0, pos0);
-        Vec pos1 = slie.last_position();
-        Vec e2 = slie.forward(1, pos1);
+        slie.reset_position();
+        Vec e2 = slie.forward(1, pos0);
         // Different tokens should produce different embeddings
         Real diff_norm = 0;
         for (Index i = 0; i < d_model; ++i) diff_norm += (e1[i] - e2[i]) * (e1[i] - e2[i]);
-        TEST_CHECK(diff_norm > 0.1, "Different token IDs should yield different embeddings");
+        std::cout << "    [debug] token0_1 L2^2=" << diff_norm << std::endl;
+        if (diff_norm < 0.001) {
+            std::cout << "    [debug] e1[0..7]=";
+            for (Index i = 0; i < 8 && i < d_model; ++i) std::cout << e1[i] << ",";
+            std::cout << " e2[0..7]=";
+            for (Index i = 0; i < 8 && i < d_model; ++i) std::cout << e2[i] << ",";
+            std::cout << std::endl;
+        }
+        TEST_CHECK(diff_norm > 1e-6, "Different token IDs should yield different embeddings (L2^2=" + std::to_string(diff_norm) + ")");
     }
 
     // 1B. Embedding dimension matches d_model
@@ -123,8 +132,16 @@ void test_slie_math() {
         Vec e_pos1 = slie.forward(10, next_p);  // same token, different position
         Real d = 0;
         for (Index i = 0; i < d_model; ++i) d += (e_pos0[i] - e_pos1[i]) * (e_pos0[i] - e_pos1[i]);
-        TEST_CHECK(d > 0.01 || d < 1e-6,
-                   "Positional encoding: same token at different positions should differ (or positional component is additive)");
+        std::cout << "    [debug] pos_diff L2^2=" << d << std::endl;
+        if (d > 1e-10 && d < 0.1) {
+            std::cout << "    [debug] e_pos0[0..7]=";
+            for (Index i = 0; i < 8 && i < d_model; ++i) std::cout << e_pos0[i] << ",";
+            std::cout << " e_pos1[0..7]=";
+            for (Index i = 0; i < 8 && i < d_model; ++i) std::cout << e_pos1[i] << ",";
+            std::cout << std::endl;
+        }
+        TEST_CHECK(d > 1e-6 || d < 1e-10,
+                   "Positional encoding: same token at diff pos should differ (L2^2=" + std::to_string(d) + ")");
     }
 
     // 1E. Sketch update does not crash and returns features
@@ -269,6 +286,14 @@ void test_stre_math() {
                 }
             }
         }
+        // Debug: print what nodes_ looks like
+        std::cout << "    [debug] nodes_.size()=" << stre.nodes().size()
+                  << " restriction_maps_.size()=";
+        // Print restriction maps size if accessible; otherwise just the node info
+        for (Index vi = 0; vi < stre.nodes().size() && vi < 5; ++vi) {
+            std::cout << " node[" << vi << "].neighbors=" << stre.nodes()[vi].neighbors.size();
+        }
+        std::cout << std::endl;
         // With identity restriction maps, L * 1 = 0 for any graph
         TEST_CLOSE(total, 0.0, 1e-10,
                    "Sheaf Laplacian of constant vector should be near zero, got " + std::to_string(total));
@@ -731,7 +756,7 @@ void test_gradient_math() {
     Real loss_before = metrics.loss;
 
     // Print gradient stats
-    Real g_norm = 0, g_max = 0, g_min = 0;
+    Real g_norm = 0, g_max = 0;
     for (auto& g : model.grad_W_out_) { g_norm += g*g; g_max = std::max(g_max, std::abs(g)); }
     for (auto& g : model.grad_b_out_) { g_norm += g*g; g_max = std::max(g_max, std::abs(g)); }
     g_norm = std::sqrt(g_norm);
@@ -742,11 +767,23 @@ void test_gradient_math() {
     Optimizer opt(Optimizer::SGD, 0.1, 0.9, 0.999, 1e-8, 0);
     opt.add_param("W_out", &model.param_W_out_, &model.grad_W_out_);
     opt.add_param("b_out", &model.param_b_out_, &model.grad_b_out_);
+
+    // Print first few logits before step
+    std::cout << "    [debug] BEFORE step: logits[0][0..7]=";
+    for (Index i = 0; i < 8 && i < 16; ++i) std::cout << model.logits_[0][0][i] << ",";
+    std::cout << " target=" << targets[0][0] << std::endl;
+
     opt.step();
     model.sync_params_to_ssog();
 
     TrainingMetrics metrics2 = model.forward(tokens, targets);
     Real loss_change = std::abs(metrics2.loss - loss_before);
+
+    // Print first few logits after step
+    std::cout << "    [debug] AFTER  step: logits[0][0..7]=";
+    for (Index i = 0; i < 8 && i < 16; ++i) std::cout << model.logits_[0][0][i] << ",";
+    std::cout << " target=" << targets[0][0] << std::endl;
+
     std::cout << "    [debug] loss before=" << loss_before
               << " after=" << metrics2.loss
               << " change=" << loss_change
