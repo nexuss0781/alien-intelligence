@@ -6,18 +6,63 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
+#include <algorithm>
 
 using namespace ai2;
 
-int main(int /*argc*/, char** /*argv*/) {
+// Find the latest checkpoint file matching a given prefix
+static std::string find_latest_checkpoint(const std::string& dir,
+                                           const std::string& prefix) {
+    namespace fs = std::filesystem;
+    if (!fs::is_directory(dir)) return {};
+
+    std::string latest;
+    Index max_step = 0;
+
+    for (const auto& entry : fs::directory_iterator(dir)) {
+        std::string name = entry.path().filename().string();
+        // Match pattern: prefix + "_step_" + digits + ".bin"
+        std::string match_prefix = prefix + "_step_";
+        if (name.rfind(match_prefix, 0) == 0 && name.size() > match_prefix.size()) {
+            std::string num_part = name.substr(match_prefix.size());
+            // Remove trailing ".bin"
+            auto dot = num_part.rfind(".bin");
+            if (dot != std::string::npos) num_part = num_part.substr(0, dot);
+            try {
+                Index step = std::stoull(num_part);
+                if (step > max_step) {
+                    max_step = step;
+                    latest = entry.path().string();
+                }
+            } catch (...) {}
+        }
+    }
+    return latest;
+}
+
+int main(int argc, char** argv) {
     std::cout << "=== Alien Intelligence (AI²) Training ===" << std::endl;
 
     // Configuration
     std::string data_dir = "data";
     std::string pretrain_file = data_dir + "/pretrain.txt";
     std::string finetune_file = data_dir + "/alpaca_cleaned.txt";
+    std::string checkpoint_dir = "checkpoints";
+    bool resume = false;
 
-    // Check if datasets exist, if not run download script
+    // Parse args: "--resume" optionally followed by a specific checkpoint path
+    std::string resume_path;
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--resume" || arg == "-r") {
+            resume = true;
+            if (i + 1 < argc && argv[i+1][0] != '-')
+                resume_path = argv[++i];
+        }
+    }
+
+    // Check if datasets exist
     {
         std::ifstream f(pretrain_file);
         if (!f.good()) {
@@ -43,11 +88,11 @@ int main(int /*argc*/, char** /*argv*/) {
         tokenizer.save(data_dir + "/tokenizer.vocab");
     }
 
-    // Create data loaders (large batch for CPU parallelism)
+    // Create data loaders
     DataLoader train_loader(pretrain_file, tokenizer, 64, 128);
     DataLoader eval_loader(pretrain_file, tokenizer, 32, 128);
 
-    // Initialize model (bigger model = better CPU utilization)
+    // Initialize model
     ModelConfig cfg;
     cfg.vocab_size = tokenizer.vocab_size();
     cfg.d_model = 256;
@@ -77,9 +122,23 @@ int main(int /*argc*/, char** /*argv*/) {
         train_cfg.save_interval = 500;
         train_cfg.lr = 0.001;
         train_cfg.run_name = "ai2_pretrain";
-        train_cfg.checkpoint_dir = "checkpoints";
+        train_cfg.checkpoint_dir = checkpoint_dir;
 
         Trainer trainer(model, train_loader, &eval_loader, train_cfg);
+
+        // Resume from checkpoint if requested
+        if (resume) {
+            std::string ckpt = resume_path.empty()
+                ? find_latest_checkpoint(checkpoint_dir, train_cfg.run_name)
+                : resume_path;
+            if (!ckpt.empty()) {
+                std::cout << "Resuming from checkpoint: " << ckpt << std::endl;
+                trainer.load_checkpoint(ckpt);
+            } else {
+                std::cout << "No checkpoint found, starting fresh." << std::endl;
+            }
+        }
+
         trainer.train();
     }
 
@@ -89,8 +148,8 @@ int main(int /*argc*/, char** /*argv*/) {
     {
         std::ifstream f(finetune_file);
         if (f.good()) {
-        DataLoader ft_loader(finetune_file, tokenizer, 32, 256);
-        DataLoader ft_eval(finetune_file, tokenizer, 16, 256);
+            DataLoader ft_loader(finetune_file, tokenizer, 32, 256);
+            DataLoader ft_eval(finetune_file, tokenizer, 16, 256);
 
             ModelConfig ft_cfg = cfg;
             ft_cfg.d_model = 256;
@@ -105,9 +164,20 @@ int main(int /*argc*/, char** /*argv*/) {
             ft_train_cfg.save_interval = 200;
             ft_train_cfg.lr = 0.0005;
             ft_train_cfg.run_name = "ai2_finetune";
-            ft_train_cfg.checkpoint_dir = "checkpoints";
+            ft_train_cfg.checkpoint_dir = checkpoint_dir;
 
             Trainer ft_trainer(ft_model, ft_loader, &ft_eval, ft_train_cfg);
+
+            if (resume) {
+                std::string ckpt = resume_path.empty()
+                    ? find_latest_checkpoint(checkpoint_dir, ft_train_cfg.run_name)
+                    : resume_path;
+                if (!ckpt.empty()) {
+                    std::cout << "Resuming finetuning from: " << ckpt << std::endl;
+                    ft_trainer.load_checkpoint(ckpt);
+                }
+            }
+
             ft_trainer.train();
         } else {
             std::cout << "Finetuning dataset not found, skipping." << std::endl;
@@ -115,7 +185,7 @@ int main(int /*argc*/, char** /*argv*/) {
     }
 
     std::cout << "\n=== Training Complete! ===" << std::endl;
-    std::cout << "Checkpoints saved to checkpoints/" << std::endl;
+    std::cout << "Checkpoints saved to " << checkpoint_dir << "/" << std::endl;
     std::cout << "Run inference with: ./ai2_infer" << std::endl;
 
     return 0;
