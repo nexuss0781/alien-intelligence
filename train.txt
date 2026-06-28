@@ -16,17 +16,27 @@ echo "[2/3] Building with CUDA..."
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j"$(nproc)" --target ai2_train
 
-# Step 3: Run training — resume from latest checkpoint+cache if exists
+# Step 3: Run training
 echo "[3/3] Starting training (GPU) ..."
-mkdir -p checkpoints
-if ls checkpoints/*.bin 2>/dev/null | head -1 | grep -q .; then
-    LATEST=$(ls -t checkpoints/*.bin 2>/dev/null | head -1)
-    echo "  Found checkpoint: $LATEST"
-    echo "  Cache file: checkpoints/*_cache.bin (loaded automatically)"
-    echo "  Resuming..."
+mkdir -p checkpoints model
+
+# Prefix-aware resume: if finetune checkpoints exist, binary skips pretrain
+if ls checkpoints/ai2_finetune_*.bin 2>/dev/null | head -1 | grep -q .; then
+    echo "  Finetune checkpoint(s) found, resuming..."
+    ./build/ai2_train --resume
+elif ls checkpoints/ai2_pretrain_*.bin 2>/dev/null | head -1 | grep -q .; then
+    echo "  Pretrain checkpoint(s) found, resuming..."
+    ./build/ai2_train --resume
+elif [ -f "model/model.bin" ]; then
+    echo "  model/model.bin found, resuming pretrain..."
     ./build/ai2_train --resume
 else
     echo "  No checkpoint found, starting fresh..."
-    echo "  Cache will be built and saved to checkpoints/*_cache.bin (~3GB)"
     ./build/ai2_train
 fi
+
+echo ""
+echo "=== Done ==="
+echo "  Latest model: model/model.bin"
+echo "  Step checkpoints: checkpoints/*_step_*.bin (every 100 steps)"
+echo "  Epoch checkpoints: checkpoints/*_epoch_*.bin (every 3 epochs)"

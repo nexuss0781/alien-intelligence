@@ -15,13 +15,15 @@ struct TrainConfig {
     Index num_epochs = 3;
     Index log_interval = 10;
     Index eval_interval = 100;
-    Index save_interval = 500;
+    Index save_interval = 100;
+    Index epoch_save_interval = 3;
     Real lr = 0.001;
     Real lr_warmup = 0.1;
     Real weight_decay = 0.01;
     Real grad_clip = 1.0;
     Index max_steps = 0;
     std::string checkpoint_dir = "checkpoints";
+    std::string model_path = "model/model.bin";
     std::string run_name = "ai2_run";
     std::string log_file = "";
 };
@@ -33,6 +35,7 @@ public:
 
     void train();
     void save_checkpoint(const std::string& path);
+    void save_latest_model();
     void load_checkpoint(const std::string& path);
 
     const std::vector<TrainingMetrics>& train_metrics() const { return metrics_; }

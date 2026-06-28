@@ -18,16 +18,19 @@ echo "[2/2] Starting inference..."
 echo "  Usage: pass prompt as arg or pipe input"
 echo ""
 
-# Find best checkpoint (final > epoch > step)
-CKPT=""
-for pattern in "*_final.bin" "*_epoch_*.bin" "*_step_*.bin"; do
-    LATEST=$(ls -t checkpoints/$pattern 2>/dev/null | head -1)
-    if [ -n "$LATEST" ]; then
-        CKPT="$LATEST"
-    fi
-done
+CKPT="model/model.bin"
+if [ ! -f "$CKPT" ]; then
+    # Fallback to checkpoint directory
+    CKPT=""
+    for pattern in "*_final.bin" "*_epoch_*.bin" "*_step_*.bin"; do
+        LATEST=$(ls -t checkpoints/$pattern 2>/dev/null | head -1)
+        if [ -n "$LATEST" ]; then
+            CKPT="$LATEST"
+        fi
+    done
+fi
 
-if [ -n "$CKPT" ]; then
+if [ -f "$CKPT" ]; then
     echo "Using checkpoint: $CKPT"
 else
     echo "No checkpoint found, using fresh model (untrained)"
@@ -36,9 +39,7 @@ fi
 echo ""
 
 if [ $# -ge 1 ]; then
-    # Prompt from args
-    ./build/ai2_infer --checkpoint "${CKPT:-checkpoints/none}" --prompt "$*"
+    ./build/ai2_infer --checkpoint "$CKPT" --prompt "$*"
 else
-    # Interactive mode
-    ./build/ai2_infer --checkpoint "${CKPT:-checkpoints/none}"
+    ./build/ai2_infer --checkpoint "$CKPT"
 fi

@@ -100,6 +100,13 @@ void Trainer::train() {
                 tokens_processed += batch.batch_size * batch.seq_len;
                 global_step++;
 
+                // Step checkpoint
+                if (global_step % cfg_.save_interval == 0) {
+                    std::string ckpt_path = cfg_.checkpoint_dir + "/" + cfg_.run_name
+                                          + "_step_" + std::to_string(global_step) + ".bin";
+                    save_checkpoint(ckpt_path);
+                }
+
                 if (global_step % cfg_.log_interval == 0) {
                     auto now = std::time(nullptr);
                     Real elapsed = std::difftime(now, start_time);
@@ -110,10 +117,12 @@ void Trainer::train() {
                               << std::endl;
                 }
             }
-            // Epoch-end checkpoint
-            std::string ep_path = cfg_.checkpoint_dir + "/" + cfg_.run_name
-                                + "_epoch_" + std::to_string(epoch + 1) + ".bin";
-            save_checkpoint(ep_path);
+            // Epoch-end checkpoint (every epoch_save_interval epochs)
+            if ((epoch + 1) % cfg_.epoch_save_interval == 0) {
+                std::string ep_path = cfg_.checkpoint_dir + "/" + cfg_.run_name
+                                    + "_epoch_" + std::to_string(epoch + 1) + ".bin";
+                save_checkpoint(ep_path);
+            }
         }
     }
 }
@@ -262,8 +271,8 @@ TrainingMetrics Trainer::train_with_cache() {
             if (cfg_.max_steps > 0 && global_step >= cfg_.max_steps) break;
         }
 
-        // Epoch-end checkpoint
-        {
+        // Epoch-end checkpoint (every epoch_save_interval epochs)
+        if ((epoch + 1) % cfg_.epoch_save_interval == 0) {
             std::string ep_path = cfg_.checkpoint_dir + "/" + cfg_.run_name
                                 + "_epoch_" + std::to_string(epoch + 1) + ".bin";
             save_checkpoint(ep_path);
@@ -424,6 +433,24 @@ void Trainer::save_checkpoint(const std::string& path) {
         f.write(reinterpret_cast<const char*>(model_.param_b_out_.data()), n * sizeof(Real));
         f.close();
         std::cout << "  [Checkpoint] saved " << path << std::endl;
+    }
+    save_latest_model();
+}
+
+void Trainer::save_latest_model() {
+    std::string path = cfg_.model_path;
+    std::filesystem::create_directories(std::filesystem::path(path).parent_path());
+    std::ofstream f(path, std::ios::binary);
+    if (f.is_open()) {
+        Index step = optimizer_.current_step();
+        f.write(reinterpret_cast<const char*>(&step), sizeof(step));
+        Index n = model_.param_W_out_.size();
+        f.write(reinterpret_cast<const char*>(&n), sizeof(n));
+        f.write(reinterpret_cast<const char*>(model_.param_W_out_.data()), n * sizeof(Real));
+        n = model_.param_b_out_.size();
+        f.write(reinterpret_cast<const char*>(&n), sizeof(n));
+        f.write(reinterpret_cast<const char*>(model_.param_b_out_.data()), n * sizeof(Real));
+        f.close();
     }
 }
 

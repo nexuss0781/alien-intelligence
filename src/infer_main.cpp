@@ -57,7 +57,7 @@ static std::string load_file(const std::string& path) {
 }
 
 int main(int argc, char** argv) {
-    std::string checkpoint_path = "checkpoints/ai2_pretrain_final.bin";
+    std::string checkpoint_path = "model/model.bin";
     std::string tokenizer_path = "data/tokenizer.vocab";
     Index max_new_tokens = 256;
     Real temperature = 0.8;
@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
         else if (arg == "--help") {
             std::cout << "AI² Inference — sub-quadratic LLM\n"
                       << "Usage: ./ai2_infer [options]\n"
-                      << "  --checkpoint <path>   Model checkpoint (default: checkpoints/ai2_pretrain_final.bin)\n"
+                      << "  --checkpoint <path>   Model checkpoint (default: model/model.bin)\n"
                       << "  --tokenizer <path>    Tokenizer vocab (default: data/tokenizer.vocab)\n"
                       << "  --max-tokens <N>      Max new tokens to generate (default: 256)\n"
                       << "  --temperature <T>     Sampling temperature (default: 0.8, 0=greedy)\n"
