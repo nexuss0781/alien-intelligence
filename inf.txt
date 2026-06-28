@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+echo "=== Alien Intelligence (AI²) Inference ==="
+
+# Step 1: Build if binary missing
+echo "[1/2] Checking build..."
+if [ ! -f "build/ai2_infer" ]; then
+    echo "  Building ai2_infer..."
+    cmake -B build -S . -DCMAKE_BUILD_TYPE=Release 2>&1 | tail -1
+    cmake --build build -j"$(nproc)" --target ai2_infer 2>&1 | tail -3
+else
+    echo "  Binary exists, skipping build"
+fi
+
+# Step 2: Run inference
+echo "[2/2] Starting inference..."
+echo "  Usage: pass prompt as arg or pipe input"
+echo ""
+
+# Find best checkpoint (final > epoch > step)
+CKPT=""
+for pattern in "*_final.bin" "*_epoch_*.bin" "*_step_*.bin"; do
+    LATEST=$(ls -t checkpoints/$pattern 2>/dev/null | head -1)
+    if [ -n "$LATEST" ]; then
+        CKPT="$LATEST"
+    fi
+done
+
+if [ -n "$CKPT" ]; then
+    echo "Using checkpoint: $CKPT"
+else
+    echo "No checkpoint found, using fresh model (untrained)"
+fi
+
+echo ""
+
+if [ $# -ge 1 ]; then
+    # Prompt from args
+    ./build/ai2_infer --checkpoint "${CKPT:-checkpoints/none}" --prompt "$*"
+else
+    # Interactive mode
+    ./build/ai2_infer --checkpoint "${CKPT:-checkpoints/none}"
+fi
