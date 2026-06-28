@@ -29,7 +29,7 @@ Token → SLIE → LSSC → STRE → [UQ] → SSOG → Distribution
 
 ### 1. SLIE — Sparse Learned Indexing of Embeddings
 
-SLIE replaces the standard embedding table (size |V| × d_model) with a hash-based embedding scheme inspired by the hashing trick and continuous bag-of-hashes architectures.
+SLIE replaces the standard embedding table (size |V| × `d_model`) with a hash-based embedding scheme inspired by the hashing trick and continuous bag-of-hashes architectures.
 
 #### Consistent Hashing Embedding (CHE)
 
@@ -53,7 +53,7 @@ Unlike sinusoidal or learned absolute positional encodings, the SPE is a streami
 
 #### Count-Min Sketch Frequency Tracking
 
-A Count-Min Sketch with sketch_depth parallel hash tables tracks token frequencies:
+A Count-Min Sketch with `sketch_depth` parallel hash tables tracks token frequencies:
 
 $$C_j[h_j(t)] \gets C_j[h_j(t)] + 1, \quad \hat{f}(t) = \min_j C_j[h_j(t)]$$
 
