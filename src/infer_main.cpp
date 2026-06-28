@@ -140,8 +140,10 @@ int main(int argc, char** argv) {
 
             // Model::forward processes every position and stores logits
             // Pass tokens as both inputs and dummy targets (0 = skip loss)
-            Mat batch_tokens = {tokens};
-            Mat dummy_targets = {std::vector<Index>(seq_len, 0)};
+            Vec token_vec(tokens.begin(), tokens.end());
+            Mat batch_tokens = {token_vec};
+            Vec zero_vec(seq_len, 0);
+            Mat dummy_targets = {zero_vec};
             model.forward(batch_tokens, dummy_targets);
 
             // Get the logits for the last position
