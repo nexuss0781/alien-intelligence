@@ -69,7 +69,7 @@ The backbone is a complex-valued diagonal linear recurrence:
 
 $$x_{t+1} = \Lambda x_t + B u_t, \quad y_t = \Re(C x_t) + D u_t$$
 
-where $\Lambda = \operatorname{diag}(\lambda_1, \dots, \lambda_{d_{state}})$ with $\lambda_j = e^{\omega_j + i\phi_j}$, and $\omega_j \sim \mathcal{N}(-0.5, 0.1)$, $\phi_j \sim \mathcal{U}(0, 2\pi)$. The eigenvalues are strictly inside the unit circle ($|\lambda_j| < 1$), ensuring bounded dynamics. All parameters are fixed random (not trained), serving as a rich temporal filter bank.
+where $\Lambda = \mathrm{diag}(\lambda_1, \dots, \lambda_{d_{state}})$ with $\lambda_j = e^{\omega_j + i\phi_j}$, and $\omega_j \sim \mathcal{N}(-0.5, 0.1)$, $\phi_j \sim \mathcal{U}(0, 2\pi)$. The eigenvalues are strictly inside the unit circle ($|\lambda_j| < 1$), ensuring bounded dynamics. All parameters are fixed random (not trained), serving as a rich temporal filter bank.
 
 The recurrence can be unrolled in O(n) via sequential scan, or parallelized using the associative scan property of linear recurrences.
 
