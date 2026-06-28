@@ -50,4 +50,7 @@ target_link_libraries(test_math ai2_train_lib ai2_gpu)
 add_executable(ai2_train src/main_train.cpp)
 target_link_libraries(ai2_train ai2_train_lib ai2_gpu)
 
+add_executable(ai2_infer src/infer_main.cpp)
+target_link_libraries(ai2_infer ai2_train_lib ai2_gpu)
+
 enable_testing()
